@@ -1,0 +1,40 @@
+syntax = "proto3";
+package DHT;
+
+message GetRequest {
+	uint64 key = 1;
+}
+
+message DeleteRequest{
+	uint64 key = 1;
+}
+
+message PutRequest {
+	string value = 1;
+}
+
+message GetResponse {
+	string value = 1;
+	enum Status {
+		Success = 0;
+		NotFound = 1;
+	}
+	Status status = 2;
+}
+
+message DeleteResponse {
+	enum Status {
+		Success = 0;
+		NotFound = 1;
+	}
+	Status status = 1;
+}
+
+message PutResponse {
+	uint64 key = 1;
+	enum Status {
+		Success = 0;
+		AlreadyExist = 1;
+	}
+	Status status = 2;
+}
