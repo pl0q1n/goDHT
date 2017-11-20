@@ -1,6 +1,12 @@
 syntax = "proto3";
 package DHT;
 
+service Node {
+	rpc ProcessGet (GetRequest) returns (GetResponse) {}
+	rpc ProcessPut (PutRequest) returns (PutResponse) {}
+	rpc ProcessDelete (DeleteRequest) returns (DeleteResponse) {}
+}
+
 message GetRequest {
 	uint64 key = 1;
 }
