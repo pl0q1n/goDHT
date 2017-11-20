@@ -2,63 +2,43 @@ package DHT
 
 import (
 	proto "../DHT_proto"
-	"net"
-	"fmt"
-	"flag"
 	"bufio"
-	"encoding/binary"
 	"crypto/sha512"
+	"encoding/binary"
+	"flag"
+	"fmt"
+	"net"
 )
-
 
 var (
 	host *string = flag.String("host", "127.0.0.1:8081", "host")
 )
 
-
-type (
-	GetRequest proto.GetRequest
-	DeleteRequest proto.DeleteRequest
-	PutRequest proto.PutRequest
-
-	GetResponse proto.GetResponse
-	DeleteResponse proto.DeleteResponse
-	PutResponse proto.PutResponse
-
-	GetStatus proto.GetResponse_Status
-	DeleteStatus proto.DeleteResponse_Status
-	PutStatus proto.PutResponse_Status
-)
-
-
 type Node struct {
-	hashTable map[uint64] string
-	start uint64
-	end uint64
-	id uint64
+	hashTable map[uint64]string
+	start     uint64
+	end       uint64
+	id        uint64
 }
-
 
 func SHAToUint64(hash [64]byte) uint64 {
 	return binary.BigEndian.Uint64(hash[:8])
 }
 
-
-func (node *Node) GetProcessing(request GetRequest) *GetResponse {
-	response := &GetResponse{}
+func (node *Node) ProcessGet(request proto.GetRequest) *proto.GetResponse {
+	response := &proto.GetResponse{}
 	value, ok := node.hashTable[request.Key]
 	if !ok {
-		response.Status = 1  // I don't get how to take "value-name" of enum from proto
+		response.Status = 1 // I don't get how to take "value-name" of enum from proto
 	} else {
 		response.Status = 0
 	}
 	response.Value = value
 	return response
-	}
+}
 
-
-func (node *Node) DeleteProcessing(request DeleteRequest) *DeleteResponse {
-	response := &DeleteResponse{}
+func (node *Node) ProcessDelete(request proto.DeleteRequest) *proto.DeleteResponse {
+	response := &proto.DeleteResponse{}
 	_, ok := node.hashTable[request.Key]
 	if ok {
 		response.Status = 0
@@ -69,9 +49,8 @@ func (node *Node) DeleteProcessing(request DeleteRequest) *DeleteResponse {
 	return response
 }
 
-
-func (node *Node) PutProcessing(request PutRequest) *PutResponse {
-	response := &PutResponse{}
+func (node *Node) ProcessPut(request proto.PutRequest) *proto.PutResponse {
+	response := &proto.PutResponse{}
 	valueBytes := []byte(request.Value)
 	key := SHAToUint64(sha512.Sum512(valueBytes))
 	_, ok := node.hashTable[key]
@@ -80,7 +59,7 @@ func (node *Node) PutProcessing(request PutRequest) *PutResponse {
 	} else {
 		response.Key = key
 		response.Status = 0
-		if node.hashTable == nil{
+		if node.hashTable == nil {
 			node.hashTable = make(map[uint64]string)
 		}
 		node.hashTable[key] = request.Value
@@ -90,14 +69,13 @@ func (node *Node) PutProcessing(request PutRequest) *PutResponse {
 
 func main() {
 	flag.Parse()
-	ln, _  := net.Listen("tcp", *(host))
+	ln, _ := net.Listen("tcp", *(host))
 	conn, _ := ln.Accept()
 
-	for  {
+	for {
 		message, _ := bufio.NewReader(conn).ReadBytes('\n')
 		fmt.Print("Message Received:", string(message))
 
 	}
-
 
 }
