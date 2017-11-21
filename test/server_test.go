@@ -24,7 +24,7 @@ func TestGetProcessingNotFound(t *testing.T) {
 		Key: 1337,
 	}
 
-	response := node.ProcessGet(*testRequest)
+	response := node.ProcessGet(testRequest)
 	if response.Status != 1 {
 		t.Errorf("wrong GetResponse_Status: %d", response.Status)
 	}
@@ -36,7 +36,7 @@ func TestPutProcessingSuccess(t *testing.T) {
 		Value: "PutProcessing test",
 	}
 
-	response := node.ProcessPut(*testRequest)
+	response := node.ProcessPut(testRequest)
 	if response.Status != 0 {
 		t.Errorf("invalid GetResponse_Status. Expected: %d, but got: %d", 0, response.Status)
 	}
@@ -47,12 +47,12 @@ func TestGetProcessingSuccess(t *testing.T) {
 	testPutRequest := &proto.PutRequest{
 		Value: "PutRequest for GetRequest",
 	}
-	testPutResponse := node.ProcessPut(*testPutRequest)
+	testPutResponse := node.ProcessPut(testPutRequest)
 	key := testPutResponse.Key
 	testGetRequest := &proto.GetRequest{
 		Key: key,
 	}
-	testResponse := node.ProcessGet(*testGetRequest)
+	testResponse := node.ProcessGet(testGetRequest)
 	if testResponse.Value != testPutRequest.Value {
 		t.Errorf("Wrong Value. Expected: %s, but got: %s", testPutRequest.Value, testResponse.Value)
 	}
@@ -64,8 +64,8 @@ func TestPutProcessingAlreadyExist(t *testing.T) {
 		Value: "PutProcessing test",
 	}
 
-	node.ProcessPut(*testRequest)
-	response := node.ProcessPut(*testRequest)
+	node.ProcessPut(testRequest)
+	response := node.ProcessPut(testRequest)
 	if response.Status != 1 {
 		t.Errorf("invalid PutProcessing_Status. Expected: %d, but got: %d", 1, response.Status)
 	}
@@ -76,7 +76,7 @@ func TestDeleteProcessingNotFound(t *testing.T) {
 	testRequest := &proto.DeleteRequest{
 		1337,
 	}
-	response := node.ProcessDelete(*testRequest)
+	response := node.ProcessDelete(testRequest)
 	if response.Status != 1 {
 		t.Errorf("invalid DeleteResponse_Status. Expected: %d, but got: %d", 1, response.Status)
 	}
@@ -88,11 +88,11 @@ func TestDeleteProcessingSuccess(t *testing.T) {
 		Value: "DeleteProcessing test",
 	}
 
-	testPutResponse := node.ProcessPut(*testPutRequest)
+	testPutResponse := node.ProcessPut(testPutRequest)
 	testDeleteRequest := &proto.DeleteRequest{
 		Key: testPutResponse.Key,
 	}
-	response := node.ProcessDelete(*testDeleteRequest)
+	response := node.ProcessDelete(testDeleteRequest)
 	if response.Status != 0 {
 		t.Errorf("invalid DeleteResponse_Status. Expected: %d, but got: %d", 0, response.Status)
 	}
@@ -101,7 +101,7 @@ func TestDeleteProcessingSuccess(t *testing.T) {
 		Key: 1337,
 	}
 
-	testGetResponse := node.ProcessGet(*testGetRequest)
+	testGetResponse := node.ProcessGet(testGetRequest)
 	if testGetResponse.Status != 1 {
 		t.Errorf("wrong GetResponse_Status: %d", testGetResponse.Status)
 	}
