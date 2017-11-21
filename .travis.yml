@@ -5,6 +5,8 @@ go:
  - release
  - tip
 
-script:
+before-script:
  - protoc --go_out=plugins=grpc:. DHT_proto/DHT.proto
+
+script:
  - go test ./test/
