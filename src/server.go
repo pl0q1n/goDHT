@@ -1,4 +1,4 @@
-package main
+package DHT
 
 import (
 	proto "../DHT_proto"
@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"flag"
 	"net"
-	"context"
+	"golang.org/x/net/context"
 	"log"
 	"google.golang.org/grpc"
 	"fmt"
