@@ -8,7 +8,9 @@ go:
 before_install:
   - sudo apt-get install protobuf-compiler
   - go get -u github.com/golang/protobuf/protoc-gen-go
-  - protoc --go_out=plugins=grpc:. DHT_proto/DHT.proto
+
+before-script:
+ - protoc --go_out=plugins=grpc:. DHT_proto/DHT.proto
 
 script:
  - go test ./test/
