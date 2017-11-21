@@ -6,4 +6,5 @@ go:
  - tip
 
 script:
+ - protoc --go_out=plugins=grpc:. DHT_proto/DHT.proto
  - go test ./test/
