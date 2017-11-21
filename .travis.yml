@@ -6,11 +6,12 @@ go:
  - tip
 
 before_install:
-  - sudo apt-get install protobuf-compiler
+  - curl -sL https://github.com/google/protobuf/releases/download/v3.5.0/protobuf-cpp-3.5.0.tar.gz | tar zx
+  - cd protobuf-3.5.0
+  - ./configure --prefix=/home/travis && make -j2 && make install
   - go get -u github.com/golang/protobuf/protoc-gen-go
-
-before-script:
- - protoc --go_out=plugins=grpc:. DHT_proto/DHT.proto
+  - go get google.golang.org/grpc
+  - protoc --go_out=plugins=grpc:. DHT_proto/DHT.proto
 
 script:
  - go test ./test/
