@@ -17,3 +17,16 @@ install:
 script:
   - go build server.go
   - go test ../test/server_test.go
+
+os: osx
+install:
+  - brew install protobuf
+  - go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
+  - go get -u google.golang.org/grpc
+  - cd $HOME/gopath/src/github.com/pl0q1n/goDHT/DHT_proto
+  - protoc --go_out=plugins=grpc:. DHT.proto
+  - cd $HOME/gopath/src/github.com/pl0q1n/goDHT/src
+
+script:
+  - go build server.go
+  - go test ../test/server_test.go
