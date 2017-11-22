@@ -6,9 +6,10 @@ go:
  - tip
 
 before_install:
-  - curl -sL https://github.com/google/protobuf/releases/download/v3.5.0/protobuf-cpp-3.5.0.tar.gz | tar zx
-  - cd protobuf-3.5.0
-  - ./configure --prefix=/home/travis && make -j2 && make install
+  - curl -OL https://github.com/google/protobuf/releases/download/v3.5.0/protoc-3.5.0-linux-x86_64.zip
+  - unzip protoc-3.2.0-linux-x86_64.zip -d protoc3
+  - sudo mv protoc3/bin/* /usr/local/bin/
+  - sudo mv protoc3/include/* /usr/local/include/
   - go get -u github.com/golang/protobuf/protoc-gen-go
   - go get google.golang.org/grpc
   - protoc --go_out=plugins=grpc:. DHT_proto/DHT.proto
