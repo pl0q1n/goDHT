@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"flag"
 	"net"
-	"golang.org/x/net/context"
+	"context"
 	"log"
 	"google.golang.org/grpc"
 	"fmt"
