@@ -12,7 +12,8 @@ before_install:
   - sudo mv protoc3/include/* /usr/local/include/
   - go get -u github.com/golang/protobuf/protoc-gen-go
   - go get google.golang.org/grpc
-  - protoc --go_out=plugins=grpc:. DHT_proto/DHT.proto
+  - cd $HOME/gopath/src/github.com/pl0q1n/goDHT/DHT_proto
+  - protoc --go_out=plugins=grpc:. DHT.proto
 
 script:
  - go test ./test/
