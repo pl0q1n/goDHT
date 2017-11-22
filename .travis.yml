@@ -1,6 +1,6 @@
 language: go
 go: 
- - tip
+ - 1.9.2
 
 install:
   - curl -OL https://github.com/google/protobuf/releases/download/v3.5.0/protoc-3.5.0-linux-x86_64.zip
@@ -14,5 +14,5 @@ install:
   - cd $HOME/gopath/src/github.com/pl0q1n/goDHT/src
 
 script:
-  - go build
-  - go test ./test/
+  - go build server.go
+  - go test ../test/
