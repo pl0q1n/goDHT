@@ -4,8 +4,8 @@ import (
 	"crypto/sha512"
 	"testing"
 
-	proto "../../proto"
-	server "../api"
+	pb "github.com/pl0q1n/goDHT/proto"
+	server "github.com/pl0q1n/goDHT/server/api"
 )
 
 func TestSHAToUint64(t *testing.T) {
@@ -21,7 +21,7 @@ func TestSHAToUint64(t *testing.T) {
 
 func TestGetProcessingNotFound(t *testing.T) {
 	node := &server.Node{}
-	testRequest := &proto.GetRequest{
+	testRequest := &pb.GetRequest{
 		Key: 1337,
 	}
 
@@ -33,7 +33,7 @@ func TestGetProcessingNotFound(t *testing.T) {
 
 func TestPutProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
-	testRequest := &proto.PutRequest{
+	testRequest := &pb.PutRequest{
 		Value: "PutProcessing test",
 	}
 
@@ -45,12 +45,12 @@ func TestPutProcessingSuccess(t *testing.T) {
 
 func TestGetProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
-	testPutRequest := &proto.PutRequest{
+	testPutRequest := &pb.PutRequest{
 		Value: "PutRequest for GetRequest",
 	}
 	testPutResponse := node.ProcessPut(testPutRequest)
 	key := testPutResponse.Key
-	testGetRequest := &proto.GetRequest{
+	testGetRequest := &pb.GetRequest{
 		Key: key,
 	}
 	testResponse := node.ProcessGet(testGetRequest)
@@ -61,7 +61,7 @@ func TestGetProcessingSuccess(t *testing.T) {
 
 func TestPutProcessingAlreadyExist(t *testing.T) {
 	node := &server.Node{}
-	testRequest := &proto.PutRequest{
+	testRequest := &pb.PutRequest{
 		Value: "PutProcessing test",
 	}
 
@@ -74,7 +74,7 @@ func TestPutProcessingAlreadyExist(t *testing.T) {
 
 func TestDeleteProcessingNotFound(t *testing.T) {
 	node := &server.Node{}
-	testRequest := &proto.DeleteRequest{
+	testRequest := &pb.DeleteRequest{
 		1337,
 	}
 	response := node.ProcessDelete(testRequest)
@@ -85,12 +85,12 @@ func TestDeleteProcessingNotFound(t *testing.T) {
 
 func TestDeleteProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
-	testPutRequest := &proto.PutRequest{
+	testPutRequest := &pb.PutRequest{
 		Value: "DeleteProcessing test",
 	}
 
 	testPutResponse := node.ProcessPut(testPutRequest)
-	testDeleteRequest := &proto.DeleteRequest{
+	testDeleteRequest := &pb.DeleteRequest{
 		Key: testPutResponse.Key,
 	}
 	response := node.ProcessDelete(testDeleteRequest)
@@ -98,7 +98,7 @@ func TestDeleteProcessingSuccess(t *testing.T) {
 		t.Errorf("invalid DeleteResponse_Status. Expected: %d, but got: %d", 0, response.Status)
 	}
 
-	testGetRequest := &proto.GetRequest{
+	testGetRequest := &pb.GetRequest{
 		Key: 1337,
 	}
 

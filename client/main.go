@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	proto "github.com/pl0q1n/goDHT/proto"
+	pb "github.com/pl0q1n/goDHT/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -18,8 +18,8 @@ func main() {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	cl := proto.NewNodeClient(conn)
-	r, err := cl.ProcessPut(context.Background(), &proto.PutRequest{Value: "1337"})
+	cl := pb.NewNodeClient(conn)
+	r, err := cl.ProcessPut(context.Background(), &pb.PutRequest{Value: "1337"})
 	if err != nil {
 		log.Fatalf("Put request failed: %v", err)
 	}

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	proto "github.com/pl0q1n/goDHT/proto"
+	pb "github.com/pl0q1n/goDHT/proto"
 	api "github.com/pl0q1n/goDHT/server/api"
 	"google.golang.org/grpc"
 )
@@ -20,6 +20,6 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterNodeServer(grpcServer, &api.Server{})
+	pb.RegisterNodeServer(grpcServer, &api.Server{})
 	grpcServer.Serve(listener)
 }
