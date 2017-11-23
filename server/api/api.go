@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/binary"
 
-	proto "../../proto"
+	proto "github.com/pl0q1n/goDHT/proto"
 
 	"context"
 	"crypto/sha512"

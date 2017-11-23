@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	proto "../proto"
+	proto "github.com/pl0q1n/goDHT/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
-	proto "../proto"
-	api "./api"
+	proto "github.com/pl0q1n/goDHT/proto"
+	api "github.com/pl0q1n/goDHT/server/api"
 	"google.golang.org/grpc"
 )
 
