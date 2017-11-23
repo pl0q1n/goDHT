@@ -1,10 +1,11 @@
-package client
+package main
 
 import (
+	"log"
+
+	proto "../proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	proto "../DHT_proto"
-	"log"
 )
 
 const (
@@ -18,8 +19,9 @@ func main() {
 	}
 	defer conn.Close()
 	cl := proto.NewNodeClient(conn)
-	cl.ProcessPut(context.Background(), &proto.PutRequest{Value: "1337"})
-	//log.Printf("Greeting: %d, %d", r.Key, r.Status)
-
-
+	r, err := cl.ProcessPut(context.Background(), &proto.PutRequest{Value: "1337"})
+	if err != nil {
+		log.Fatalf("Put request failed: %v", err)
+	}
+	log.Printf("Greeting: %d, %d", r.Key, r.Status)
 }

@@ -1,25 +1,13 @@
-package DHT
+package api
 
 import (
-	proto "../DHT_proto"
-	"crypto/sha512"
 	"encoding/binary"
-	"flag"
-	"net"
-	"context"
-	"log"
-	"google.golang.org/grpc"
-	"fmt"
-)
 
-var (
-	host *string = flag.String("host", "127.0.0.1:8081", "host")
-	node *Node = &Node{
-		hashTable: make(map[uint64]string),
-		start: 0,
-		end: 0,
-		id: 0,
-	}
+	proto "../../proto"
+
+	"context"
+	"crypto/sha512"
+	"fmt"
 )
 
 type Node struct {
@@ -27,6 +15,13 @@ type Node struct {
 	start     uint64
 	end       uint64
 	id        uint64
+}
+
+var node *Node = &Node{
+	hashTable: make(map[uint64]string),
+	start:     0,
+	end:       0,
+	id:        0,
 }
 
 func SHAToUint64(hash [64]byte) uint64 {
@@ -78,34 +73,20 @@ func (node *Node) ProcessPut(request *proto.PutRequest) *proto.PutResponse {
 	return response
 }
 
-type server struct{}
+type Server struct{}
 
 // I'm not sure about error handling here (nothing to handle)
-func (s *server) ProcessGet(ctx context.Context, in *proto.GetRequest) (*proto.GetResponse, error) {
+func (s *Server) ProcessGet(ctx context.Context, in *proto.GetRequest) (*proto.GetResponse, error) {
 	fmt.Println("starting Process GET")
 	return node.ProcessGet(in), nil
 }
 
-func (s *server) ProcessPut(ctx context.Context, in *proto.PutRequest) (*proto.PutResponse, error) {
+func (s *Server) ProcessPut(ctx context.Context, in *proto.PutRequest) (*proto.PutResponse, error) {
 	fmt.Println("starting Process PUT")
 	return node.ProcessPut(in), nil
 }
 
-func (s *server) ProcessDelete(ctx context.Context, in *proto.DeleteRequest) (*proto.DeleteResponse, error) {
+func (s *Server) ProcessDelete(ctx context.Context, in *proto.DeleteRequest) (*proto.DeleteResponse, error) {
 	fmt.Println("starting Process DELETE")
 	return node.ProcessDelete(in), nil
-}
-
-
-func main() {
-	flag.Parse()
-
-	ln, err := net.Listen("tcp", *(host))
-	if err != nil {
-		log.Fatalf("failed to lwisten: %v", err)
-	}
-
-	grpcServer := grpc.NewServer()
-	proto.RegisterNodeServer(grpcServer, &server{})
-	grpcServer.Serve(ln)
 }

@@ -1,10 +1,11 @@
 package DHT_test
 
 import (
-	server "../src"
-	proto "../DHT_proto"
 	"crypto/sha512"
 	"testing"
+
+	proto "../../proto"
+	server "../api"
 )
 
 func TestSHAToUint64(t *testing.T) {
