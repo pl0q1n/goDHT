@@ -1,0 +1,28 @@
+language: go
+go: 
+ - 1.9.2
+
+install:
+  # install protoc
+  - curl -OL https://github.com/google/protobuf/releases/download/v3.5.0/protoc-3.5.0-linux-x86_64.zip
+  - unzip protoc-3.5.0-linux-x86_64.zip -d protoc3
+  - sudo mv protoc3/bin/* /usr/local/bin/
+  - sudo mv protoc3/include/* /usr/local/include/
+  
+  # install go plugins for protoc
+  - go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
+  - go get -u google.golang.org/grpc
+
+  # generate go code from proto
+  - protoc --go_out=plugins=grpc:. ./client_proto/client.proto
+
+  # install dep
+  - go get -u github.com/golang/dep/cmd/dep
+  # download dependencies
+  - cd ./server && dep ensure -v
+  - cd ../client && dep ensure -v
+
+script:
+  - cd ../server && go build
+  - cd ../client && go build
+  - cd ../server && go test ./test

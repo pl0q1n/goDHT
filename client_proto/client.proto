@@ -1,5 +1,6 @@
 syntax = "proto3";
-package DHT;
+
+package client_proto;
 
 service Node {
 	rpc ProcessGet (GetRequest) returns (GetResponse) {}
