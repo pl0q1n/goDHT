@@ -14,11 +14,10 @@ install:
   - go get -u google.golang.org/grpc
 
   # generate go code from proto
-  - protoc --go_out=plugins=grpc:. ./proto/DHT.proto
+  - protoc --go_out=plugins=grpc:. ./client_proto/client.proto
 
   # install dep
   - go get -u github.com/golang/dep/cmd/dep
-
   # download dependencies
   - cd ./server && dep ensure -v
   - cd ../client && dep ensure -v

@@ -4,7 +4,7 @@ import (
 	"crypto/sha512"
 	"testing"
 
-	pb "github.com/pl0q1n/goDHT/proto"
+	pb "github.com/pl0q1n/goDHT/client_proto"
 	server "github.com/pl0q1n/goDHT/server/api"
 )
 
