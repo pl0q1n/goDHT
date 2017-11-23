@@ -20,5 +20,13 @@
 #  version = "2.4.0"
 
 [[constraint]]
-name = "github.com/pl0qin/goDHT"
-branch = "TravisIntegration"
+  branch = "TravisIntegration"
+  name = "github.com/pl0q1n/goDHT"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[constraint]]
+  name = "google.golang.org/grpc"
+  version = "1.8.0"
