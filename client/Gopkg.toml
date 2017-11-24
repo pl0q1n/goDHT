@@ -22,7 +22,7 @@
 
 
 [[constraint]]
-  branch = "TravisIntegration"
+  branch = "master"
   name = "github.com/pl0q1n/goDHT"
 
 [[constraint]]

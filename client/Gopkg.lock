@@ -8,10 +8,10 @@
   revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
 
 [[projects]]
-  branch = "TravisIntegration"
+  branch = "master"
   name = "github.com/pl0q1n/goDHT"
-  packages = ["proto"]
-  revision = "898e3222d1afdca1ba0d1c1055571d1fc28d3948"
+  packages = ["client_proto"]
+  revision = "58897ff30101406af2361cd63e9b8ac6277a335e"
 
 [[projects]]
   branch = "master"
@@ -40,6 +40,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e2bf5696ae9bee0c098a4e5a4b5af0cd00c6c698d697061e2e1e422205a90271"
+  inputs-digest = "ffe7d716185795b76e638e1b144d2f2c458b8f0b282a1f67a45aa618e435c884"
   solver-name = "gps-cdcl"
   solver-version = 1
