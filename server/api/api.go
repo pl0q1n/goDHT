@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/binary"
 
-	pb "goDHT/client_proto"
+	pb "github.com/pl0q1n/goDHT/client_proto"
 
 	"context"
 	"crypto/sha512"

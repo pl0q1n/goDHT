@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	pb "goDHT/client_proto"
+	pb "github.com/pl0q1n/goDHT/client_proto"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
