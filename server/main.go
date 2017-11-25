@@ -5,15 +5,15 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/pl0q1n/goDHT/client_proto"
-	api "github.com/pl0q1n/goDHT/server/api"
+	pb "goDHT/client_proto"
+	api "goDHT/server/api"
+
 	"google.golang.org/grpc"
 )
 
 func main() {
 	host := flag.String("host", "127.0.0.1:8081", "host")
 	flag.Parse()
-
 	listener, err := net.Listen("tcp", *host)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)

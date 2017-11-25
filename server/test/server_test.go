@@ -4,8 +4,8 @@ import (
 	"crypto/sha512"
 	"testing"
 
-	pb "github.com/pl0q1n/goDHT/client_proto"
-	server "github.com/pl0q1n/goDHT/server/api"
+	pb "goDHT/client_proto"
+	server "goDHT/server/api"
 )
 
 func TestSHAToUint64(t *testing.T) {

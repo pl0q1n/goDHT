@@ -3,13 +3,14 @@ package api
 import (
 	"encoding/binary"
 
-	pb "github.com/pl0q1n/goDHT/client_proto"
+	pb "goDHT/client_proto"
 
 	"context"
 	"crypto/sha512"
 	"fmt"
 )
 
+// Node..Brief implimentation of node structure for DHT
 type Node struct {
 	hashTable map[uint64]string
 	start     uint64
@@ -17,7 +18,7 @@ type Node struct {
 	id        uint64
 }
 
-var node *Node = &Node{
+var GlobalNode *Node = &Node{
 	hashTable: make(map[uint64]string),
 	start:     0,
 	end:       0,
@@ -26,6 +27,11 @@ var node *Node = &Node{
 
 func SHAToUint64(hash [64]byte) uint64 {
 	return binary.BigEndian.Uint64(hash[:8])
+}
+
+func (node *Node) SetId(host *string) {
+	hashSum := sha512.Sum512([]byte(*host))
+	node.id = SHAToUint64(hashSum)
 }
 
 func (node *Node) ProcessGet(request *pb.GetRequest) *pb.GetResponse {
@@ -78,15 +84,15 @@ type Server struct{}
 // I'm not sure about error handling here (nothing to handle)
 func (s *Server) ProcessGet(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	fmt.Println("starting Process GET")
-	return node.ProcessGet(in), nil
+	return GlobalNode.ProcessGet(in), nil
 }
 
 func (s *Server) ProcessPut(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	fmt.Println("starting Process PUT")
-	return node.ProcessPut(in), nil
+	return GlobalNode.ProcessPut(in), nil
 }
 
 func (s *Server) ProcessDelete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	fmt.Println("starting Process DELETE")
-	return node.ProcessDelete(in), nil
+	return GlobalNode.ProcessDelete(in), nil
 }
