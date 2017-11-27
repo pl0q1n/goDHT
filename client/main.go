@@ -19,10 +19,10 @@ func main() {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	cl := pb.NewNodeClient(conn)
-	r, err := cl.ProcessPut(context.Background(), &pb.PutRequest{Value: "1337"})
+	cl := pb.NewKeyValueClient(conn)
+	r, err := cl.ProcessPut(context.Background(), &pb.PutRequest{Value: []byte("1337")})
 	if err != nil {
 		log.Fatalf("Put request failed: %v", err)
 	}
-	log.Printf("Greeting: %d, %d", r.Key, r.Status)
+	log.Printf("Greeting: %d", r.Status)
 }

@@ -2,6 +2,8 @@ package DHT_test
 
 import (
 	"crypto/sha512"
+	"encoding/binary"
+	"reflect"
 	"testing"
 
 	pb "github.com/pl0q1n/goDHT/client_proto"
@@ -21,8 +23,10 @@ func TestSHAToUint64(t *testing.T) {
 
 func TestGetProcessingNotFound(t *testing.T) {
 	node := &server.Node{}
+	key := make([]byte, 4)
+	binary.LittleEndian.PutUint32(key, 1337)
 	testRequest := &pb.GetRequest{
-		Key: 1337,
+		Key: key,
 	}
 
 	response := node.ProcessGet(testRequest)
@@ -33,8 +37,11 @@ func TestGetProcessingNotFound(t *testing.T) {
 
 func TestPutProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
+	key := make([]byte, 4)
+	binary.LittleEndian.PutUint32(key, 1337)
 	testRequest := &pb.PutRequest{
-		Value: "PutProcessing test",
+		Value: []byte("PutProcessing test"),
+		Key:   key,
 	}
 
 	response := node.ProcessPut(testRequest)
@@ -45,24 +52,29 @@ func TestPutProcessingSuccess(t *testing.T) {
 
 func TestGetProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
+	key := make([]byte, 4)
+	binary.LittleEndian.PutUint32(key, 1337)
 	testPutRequest := &pb.PutRequest{
-		Value: "PutRequest for GetRequest",
+		Value: []byte("PutRequest for GetRequest"),
+		Key:   key,
 	}
-	testPutResponse := node.ProcessPut(testPutRequest)
-	key := testPutResponse.Key
+	node.ProcessPut(testPutRequest)
 	testGetRequest := &pb.GetRequest{
 		Key: key,
 	}
 	testResponse := node.ProcessGet(testGetRequest)
-	if testResponse.Value != testPutRequest.Value {
+	if !reflect.DeepEqual(testResponse.Value, testPutRequest.Value) {
 		t.Errorf("Wrong Value. Expected: %s, but got: %s", testPutRequest.Value, testResponse.Value)
 	}
 }
 
 func TestPutProcessingAlreadyExist(t *testing.T) {
 	node := &server.Node{}
+	key := make([]byte, 4)
+	binary.LittleEndian.PutUint32(key, 1337)
 	testRequest := &pb.PutRequest{
-		Value: "PutProcessing test",
+		Value: []byte("PutProcessing test"),
+		Key:   key,
 	}
 
 	node.ProcessPut(testRequest)
@@ -74,8 +86,10 @@ func TestPutProcessingAlreadyExist(t *testing.T) {
 
 func TestDeleteProcessingNotFound(t *testing.T) {
 	node := &server.Node{}
+	key := make([]byte, 4)
+	binary.LittleEndian.PutUint32(key, 1337)
 	testRequest := &pb.DeleteRequest{
-		1337,
+		key,
 	}
 	response := node.ProcessDelete(testRequest)
 	if response.Status != 1 {
@@ -85,13 +99,16 @@ func TestDeleteProcessingNotFound(t *testing.T) {
 
 func TestDeleteProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
+	key := make([]byte, 4)
+	binary.LittleEndian.PutUint32(key, 1337)
 	testPutRequest := &pb.PutRequest{
-		Value: "DeleteProcessing test",
+		Value: []byte("DeleteProcessing test"),
+		Key:   key,
 	}
 
-	testPutResponse := node.ProcessPut(testPutRequest)
+	node.ProcessPut(testPutRequest)
 	testDeleteRequest := &pb.DeleteRequest{
-		Key: testPutResponse.Key,
+		Key: key,
 	}
 	response := node.ProcessDelete(testDeleteRequest)
 	if response.Status != 0 {
@@ -99,7 +116,7 @@ func TestDeleteProcessingSuccess(t *testing.T) {
 	}
 
 	testGetRequest := &pb.GetRequest{
-		Key: 1337,
+		Key: key,
 	}
 
 	testGetResponse := node.ProcessGet(testGetRequest)

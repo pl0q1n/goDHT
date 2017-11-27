@@ -20,6 +20,6 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterNodeServer(grpcServer, &api.Server{})
+	pb.RegisterKeyValueServer(grpcServer, &api.Server{})
 	grpcServer.Serve(listener)
 }

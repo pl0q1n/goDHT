@@ -2,26 +2,27 @@ syntax = "proto3";
 
 package client_proto;
 
-service Node {
+service KeyValue {
 	rpc ProcessGet (GetRequest) returns (GetResponse) {}
 	rpc ProcessPut (PutRequest) returns (PutResponse) {}
 	rpc ProcessDelete (DeleteRequest) returns (DeleteResponse) {}
 }
 
 message GetRequest {
-	uint64 key = 1;
+	bytes key = 1;
 }
 
 message DeleteRequest{
-	uint64 key = 1;
+	bytes key = 1;
 }
 
 message PutRequest {
-	string value = 1;
+	bytes key = 1;	
+	bytes value = 2;
 }
 
 message GetResponse {
-	string value = 1;
+	bytes value = 1;
 	enum Status {
 		Success = 0;
 		NotFound = 1;
@@ -38,10 +39,10 @@ message DeleteResponse {
 }
 
 message PutResponse {
-	uint64 key = 1;
 	enum Status {
 		Success = 0;
 		AlreadyExist = 1;
+		InvalidKey = 2;
 	}
 	Status status = 2;
 }

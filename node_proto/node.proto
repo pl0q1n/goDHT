@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package node_proto;
+
+service Node {
+    rpc ProcessJoin(JoinRequest) returns (JoinResponse) {}
+    rpc ProcessFingerTable(FingerTableRequest) returns (FingerTable) {}
+}
+
+
+message JoinRequest {
+    uint64 id = 1;
+    string host = 2;
+}
+
+message JoinResponse {
+    FingerTable fingerTable = 1;
+    map<uint64, bytes> initStorage = 2;
+    enum Status {
+        Success = 0;
+        Failure = 101;
+    }
+    Status status = 3;
+}
+
+message FingerTable {
+    message Entry {
+        uint64 hash = 1;
+        string host = 2;
+    }
+    repeated Entry entry = 1;
+}
+
+message FingerTableRequest {
+}
