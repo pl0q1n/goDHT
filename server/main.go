@@ -5,7 +5,8 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/pl0q1n/goDHT/client_proto"
+	pbClient "github.com/pl0q1n/goDHT/client_proto"
+	pbNode "github.com/pl0q1n/goDHT/node_proto"
 	api "github.com/pl0q1n/goDHT/server/api"
 
 	"google.golang.org/grpc"
@@ -18,8 +19,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-
 	grpcServer := grpc.NewServer()
-	pb.RegisterKeyValueServer(grpcServer, &api.Server{})
+	pbNode.RegisterNodeServer(grpcServer, &api.NodeServer{})
+	pbClient.RegisterKeyValueServer(grpcServer, &api.ClientServer{})
 	grpcServer.Serve(listener)
 }
