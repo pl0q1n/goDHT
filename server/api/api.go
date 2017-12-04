@@ -23,10 +23,13 @@ type Node struct {
 var GlobalNode *Node = &Node{
 	hashTable: make(map[uint64][]byte),
 	fingerTable: FingerTable{
-		start: 0,
-		selfEntry: Entry{
-			host: "",
-			hash: 0,
+		PreviousEntry: Entry{
+			Host: "",
+			Hash: 0,
+		},
+		SelfEntry: Entry{
+			Host: "",
+			Hash: 0,
 		},
 	},
 }
@@ -37,7 +40,17 @@ func SHAToUint64(hash [64]byte) uint64 {
 
 func (node *Node) SetId(host *string) {
 	hashSum := sha512.Sum512([]byte(*host))
-	node.fingerTable.selfEntry.hash = SHAToUint64(hashSum)
+	node.fingerTable.SelfEntry.Hash = SHAToUint64(hashSum)
+}
+
+func (node *Node) GetRange(start uint64, end uint64) map[uint64][]byte {
+	rangeMap := make(map[uint64][]byte)
+	for key, value := range node.hashTable {
+		if key >= start && key < end {
+			rangeMap[key] = value
+		}
+	}
+	return rangeMap
 }
 
 func (node *Node) ProcessGet(request *pbClient.GetRequest) *pbClient.GetResponse {
@@ -115,19 +128,30 @@ type NodeServer struct {
 
 func (s *NodeServer) ProcessJoin(ctx context.Context, in *pbNode.JoinRequest) (*pbNode.JoinResponse, error) {
 	var entry *Entry = &Entry{
-		hash: in.Id,
-		host: in.Host,
+		Hash: in.Id,
+		Host: in.Host,
+	}
+
+	if in.Id < GlobalNode.id && in.Id > GlobalNode.fingerTable.PreviousEntry.Hash {
+		status := pbNode.JoinResponse_WrongNode
+		response := &pbNode.JoinResponse{}
+		response.Status = status
+		return response, nil
 	}
 
 	GlobalNode.fingerTable.add(entry)
+	protoFingerTable := GlobalNode.fingerTable.GetProtoFingerTable()
+
 	response := &pbNode.JoinResponse{}
+	response.FingerTable = protoFingerTable
+	response.InitStorage = GlobalNode.GetRange(GlobalNode.fingerTable.PreviousEntry.Hash, in.Id)
+	response.Status = pbNode.JoinResponse_Success
 
 	return response, nil
 }
 
 func (s *NodeServer) ProcessFingerTable(ctx context.Context, in *pbNode.FingerTableRequest) (*pbNode.FingerTable, error) {
-	response := &pbNode.FingerTable{}
-
+	response := GlobalNode.fingerTable.GetProtoFingerTable()
 	return response, nil
 }
 

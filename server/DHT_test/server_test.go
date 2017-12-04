@@ -3,12 +3,37 @@ package DHT_test
 import (
 	"crypto/sha512"
 	"encoding/binary"
+	"fmt"
 	"reflect"
 	"testing"
 
-	pb "github.com/pl0q1n/goDHT/client_proto"
+	proto "github.com/golang/protobuf/proto"
+	pbClient "github.com/pl0q1n/goDHT/client_proto"
+	pbNode "github.com/pl0q1n/goDHT/node_proto"
 	server "github.com/pl0q1n/goDHT/server/api"
 )
+
+func getTestFingerTable() *server.FingerTable {
+	fingerTable := &server.FingerTable{}
+	prevEntry := &server.Entry{
+		Host: "127.13.37.0",
+		Hash: 1337,
+	}
+	selfEntry := &server.Entry{
+		Host: "127.14.88.0",
+		Hash: 1488,
+	}
+
+	for i := 0; i < len(fingerTable.Entries); i++ {
+		fingerTable.Entries[i].Hash = uint64(i * 30)
+		fingerTable.Entries[i].Host = fmt.Sprintf("127.0.0.%d", i)
+	}
+
+	fingerTable.PreviousEntry = *prevEntry
+	fingerTable.SelfEntry = *selfEntry
+
+	return fingerTable
+}
 
 func TestSHAToUint64(t *testing.T) {
 	testString := "SHAToUint"
@@ -25,7 +50,7 @@ func TestGetProcessingNotFound(t *testing.T) {
 	node := &server.Node{}
 	key := make([]byte, 4)
 	binary.LittleEndian.PutUint32(key, 1337)
-	testRequest := &pb.GetRequest{
+	testRequest := &pbClient.GetRequest{
 		Key: key,
 	}
 
@@ -39,7 +64,7 @@ func TestPutProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
 	key := make([]byte, 4)
 	binary.LittleEndian.PutUint32(key, 1337)
-	testRequest := &pb.PutRequest{
+	testRequest := &pbClient.PutRequest{
 		Value: []byte("PutProcessing test"),
 		Key:   key,
 	}
@@ -54,12 +79,12 @@ func TestGetProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
 	key := make([]byte, 4)
 	binary.LittleEndian.PutUint32(key, 1337)
-	testPutRequest := &pb.PutRequest{
+	testPutRequest := &pbClient.PutRequest{
 		Value: []byte("PutRequest for GetRequest"),
 		Key:   key,
 	}
 	node.ProcessPut(testPutRequest)
-	testGetRequest := &pb.GetRequest{
+	testGetRequest := &pbClient.GetRequest{
 		Key: key,
 	}
 	testResponse := node.ProcessGet(testGetRequest)
@@ -72,7 +97,7 @@ func TestPutProcessingAlreadyExist(t *testing.T) {
 	node := &server.Node{}
 	key := make([]byte, 4)
 	binary.LittleEndian.PutUint32(key, 1337)
-	testRequest := &pb.PutRequest{
+	testRequest := &pbClient.PutRequest{
 		Value: []byte("PutProcessing test"),
 		Key:   key,
 	}
@@ -88,7 +113,7 @@ func TestDeleteProcessingNotFound(t *testing.T) {
 	node := &server.Node{}
 	key := make([]byte, 4)
 	binary.LittleEndian.PutUint32(key, 1337)
-	testRequest := &pb.DeleteRequest{
+	testRequest := &pbClient.DeleteRequest{
 		key,
 	}
 	response := node.ProcessDelete(testRequest)
@@ -101,13 +126,13 @@ func TestDeleteProcessingSuccess(t *testing.T) {
 	node := &server.Node{}
 	key := make([]byte, 4)
 	binary.LittleEndian.PutUint32(key, 1337)
-	testPutRequest := &pb.PutRequest{
+	testPutRequest := &pbClient.PutRequest{
 		Value: []byte("DeleteProcessing test"),
 		Key:   key,
 	}
 
 	node.ProcessPut(testPutRequest)
-	testDeleteRequest := &pb.DeleteRequest{
+	testDeleteRequest := &pbClient.DeleteRequest{
 		Key: key,
 	}
 	response := node.ProcessDelete(testDeleteRequest)
@@ -115,12 +140,39 @@ func TestDeleteProcessingSuccess(t *testing.T) {
 		t.Errorf("invalid DeleteResponse_Status. Expected: %d, but got: %d", 0, response.Status)
 	}
 
-	testGetRequest := &pb.GetRequest{
+	testGetRequest := &pbClient.GetRequest{
 		Key: key,
 	}
 
 	testGetResponse := node.ProcessGet(testGetRequest)
 	if testGetResponse.Status != 1 {
 		t.Errorf("wrong GetResponse_Status: %d", testGetResponse.Status)
+	}
+}
+
+func TestGetProtoFingerTable(t *testing.T) {
+	fingerTable := getTestFingerTable()
+	protoFingerTable := &pbNode.FingerTable{}
+	protoEntry := &pbNode.FingerTable_Entry{}
+
+	protoEntry.Hash = fingerTable.PreviousEntry.Hash
+	protoEntry.Host = fingerTable.PreviousEntry.Host
+	protoFingerTable.Previous = protoEntry
+
+	var entrySlice []*pbNode.FingerTable_Entry
+
+	for _, elem := range fingerTable.Entries {
+		protoEntry = &pbNode.FingerTable_Entry{}
+		protoEntry.Hash = elem.Hash
+		protoEntry.Host = elem.Host
+		entrySlice = append(entrySlice, protoEntry)
+	}
+
+	protoFingerTable.Entry = entrySlice
+
+	testProtoFingerTable := fingerTable.GetProtoFingerTable()
+
+	if !proto.Equal(protoFingerTable, testProtoFingerTable) {
+		t.Error("FingerTable messages are not equal")
 	}
 }

@@ -20,6 +20,7 @@ message JoinResponse {
     enum Status {
         Success = 0;
         Failure = 101;
+        WrongNode = 102;
     }
     Status status = 3;
 }
@@ -30,6 +31,7 @@ message FingerTable {
         string host = 2;
     }
     repeated Entry entry = 1;
+    Entry previous = 2;
 }
 
 message FingerTableRequest {
