@@ -21,7 +21,7 @@ func getTestFingerTable() *server.FingerTable {
 	}
 	selfEntry := &server.Entry{
 		Host: "127.14.88.0",
-		Hash: 1488,
+		Hash: 1480,
 	}
 
 	for i := 0; i < len(fingerTable.Entries); i++ {
@@ -33,6 +33,12 @@ func getTestFingerTable() *server.FingerTable {
 	fingerTable.SelfEntry = *selfEntry
 
 	return fingerTable
+}
+
+func assertEqual(expected interface{}, actual interface{}, t *testing.T) {
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Assertion failed. Expected: %v, but got: %v", expected, actual)
+	}
 }
 
 func TestSHAToUint64(t *testing.T) {
@@ -175,4 +181,65 @@ func TestGetProtoFingerTable(t *testing.T) {
 	if !proto.Equal(protoFingerTable, testProtoFingerTable) {
 		t.Error("FingerTable messages are not equal")
 	}
+}
+
+func TestRoute(t *testing.T) {
+	fingerTable := getTestFingerTable()
+
+	//Primitive one
+	assertEqual("127.0.0.4", fingerTable.Route(90), t)
+
+	//Over 0
+	assertEqual("127.0.0.0", fingerTable.Route(1900), t)
+
+	//Last id
+	assertEqual("127.0.0.0", fingerTable.Route(1890), t)
+
+	//self
+	assertEqual(fingerTable.SelfEntry.Host,
+		fingerTable.Route(fingerTable.SelfEntry.Hash-1), t)
+
+	tempHash := fingerTable.SelfEntry.Hash
+	fingerTable.SelfEntry.Hash = fingerTable.PreviousEntry.Hash
+	fingerTable.PreviousEntry.Hash = tempHash
+
+	//selfhash = 1338, prev = 1480
+	assertEqual(fingerTable.SelfEntry.Host, fingerTable.Route(1500), t)
+}
+
+func TestAdd(t *testing.T) {
+	fingerTable := &server.FingerTable{
+		PreviousEntry: server.Entry{
+			Host: "127.13.37.0",
+			Hash: 1337,
+		},
+		SelfEntry: server.Entry{
+			Host: "127.14.88.0",
+			Hash: 1480,
+		},
+	}
+	firstEntry := &server.Entry{
+		Host: "00.00.00.0",
+		Hash: 1900,
+	}
+
+	for _, elem := range fingerTable.Entries {
+		assertEqual(server.Entry{}, elem, t)
+	}
+
+	fingerTable.Add(firstEntry)
+
+	for _, elem := range fingerTable.Entries {
+		assertEqual(*firstEntry, elem, t)
+	}
+
+	secondEntry := &server.Entry{
+		Host: "11.11.11.11",
+		Hash: 2900,
+	}
+
+	fingerTable.Add(secondEntry)
+	assertEqual(secondEntry.Host, fingerTable.Route(1905), t)
+	assertEqual(firstEntry.Host, fingerTable.Route(secondEntry.Hash), t)
+
 }

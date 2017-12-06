@@ -20,6 +20,7 @@ type Node struct {
 	id          uint64
 }
 
+
 var GlobalNode *Node = &Node{
 	hashTable: make(map[uint64][]byte),
 	fingerTable: FingerTable{
@@ -139,7 +140,7 @@ func (s *NodeServer) ProcessJoin(ctx context.Context, in *pbNode.JoinRequest) (*
 		return response, nil
 	}
 
-	GlobalNode.fingerTable.add(entry)
+	GlobalNode.fingerTable.Add(entry)
 	protoFingerTable := GlobalNode.fingerTable.GetProtoFingerTable()
 
 	response := &pbNode.JoinResponse{}
