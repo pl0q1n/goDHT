@@ -32,6 +32,7 @@ message FingerTable {
     }
     repeated Entry entry = 1;
     Entry previous = 2;
+    Entry selfEntry = 3;
 }
 
 message FingerTableRequest {
