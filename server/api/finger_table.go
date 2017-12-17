@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"math"
 
 	pbNode "github.com/pl0q1n/goDHT/node_proto"
@@ -35,12 +34,17 @@ func diff(lhs uint64, rhs uint64) uint64 {
 }
 
 func (fingerTable *FingerTable) chosePrevious(possiblePrevious *Entry) {
+	if fingerTable.PreviousEntry.Host == "" {
+		fingerTable.PreviousEntry.Host = possiblePrevious.Host
+		fingerTable.PreviousEntry.Hash = possiblePrevious.Hash
+	}
+
 	if fingerTable.SelfEntry.Host == "" {
 		fingerTable.SelfEntry.Host = possiblePrevious.Host
 		fingerTable.SelfEntry.Hash = possiblePrevious.Hash
 		return
 	}
-	selfDiff := diff(fingerTable.SelfEntry.Hash, fingerTable.SelfEntry.Hash)
+	selfDiff := diff(fingerTable.SelfEntry.Hash, fingerTable.PreviousEntry.Hash)
 	targetDiff := diff(possiblePrevious.Hash, fingerTable.PreviousEntry.Hash)
 	if selfDiff > targetDiff && possiblePrevious.Hash < fingerTable.SelfEntry.Hash {
 		fingerTable.PreviousEntry.Hash = possiblePrevious.Hash
@@ -97,7 +101,6 @@ func (fingerTable *FingerTable) Add(entry *Entry) Update {
 	}
 	fingerTable.chosePrevious(entry)
 	if fingerTable.Entries[0].Host == "" {
-		log.Printf("First branch of add with: %s", entry.Host)
 		for ind := range fingerTable.Entries {
 			fingerTable.Entries[ind] = *entry
 			update.updates[ind] = fingerTable.Entries[ind].Host
@@ -108,7 +111,6 @@ func (fingerTable *FingerTable) Add(entry *Entry) Update {
 		target := fingerTable.SelfEntry.Hash + (1 << uint64(i))
 		if entry.Hash >= target {
 			if diff(fingerTable.Entries[i].Hash, target) > diff(target, entry.Hash) {
-				log.Printf("Second branch of add with old: %s and new %s and index: %d", fingerTable.Entries[i].Host, entry.Host, i)
 				fingerTable.Entries[i] = *entry
 				update.updates[i] = entry.Host
 			}
@@ -118,15 +120,15 @@ func (fingerTable *FingerTable) Add(entry *Entry) Update {
 
 }
 
-func (fingerTable *FingerTable) Route(Hash uint64) string {
+func (fingerTable *FingerTable) Route(Hash uint64) (string, int) {
 	if fingerTable.SelfEntry.Hash < fingerTable.PreviousEntry.Hash {
 		if Hash >= fingerTable.PreviousEntry.Hash || Hash < fingerTable.SelfEntry.Hash {
-			return fingerTable.SelfEntry.Host
+			return fingerTable.SelfEntry.Host, 64
 		}
 	}
 
 	if Hash >= fingerTable.PreviousEntry.Hash && Hash < fingerTable.SelfEntry.Hash {
-		return fingerTable.SelfEntry.Host
+		return fingerTable.SelfEntry.Host, 64
 	}
 
 	var min Pair = Pair{
@@ -142,7 +144,7 @@ func (fingerTable *FingerTable) Route(Hash uint64) string {
 	}
 
 	if min.second == uint64(len(fingerTable.Entries)) {
-		return fingerTable.Entries[0].Host
+		return fingerTable.Entries[0].Host, 0
 	}
-	return fingerTable.Entries[min.second].Host
+	return fingerTable.Entries[min.second].Host, int(min.second)
 }

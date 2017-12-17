@@ -174,7 +174,12 @@ func TestGetProtoFingerTable(t *testing.T) {
 		entrySlice = append(entrySlice, protoEntry)
 	}
 
+	protoSelf := &pbNode.FingerTable_Entry{}
+	protoSelf.Hash = fingerTable.SelfEntry.Hash
+	protoSelf.Host = fingerTable.SelfEntry.Host
+
 	protoFingerTable.Entry = entrySlice
+	protoFingerTable.SelfEntry = protoSelf
 
 	testProtoFingerTable := fingerTable.GetProtoFingerTable()
 
@@ -186,25 +191,34 @@ func TestGetProtoFingerTable(t *testing.T) {
 func TestRoute(t *testing.T) {
 	fingerTable := getTestFingerTable()
 
+	host, _ := fingerTable.Route(90)
+
 	//Primitive one
-	assertEqual("127.0.0.4", fingerTable.Route(90), t)
+	assertEqual("127.0.0.4", host, t)
+
+	host, _ = fingerTable.Route(1900)
 
 	//Over 0
-	assertEqual("127.0.0.0", fingerTable.Route(1900), t)
+	assertEqual("127.0.0.0", host, t)
+
+	host, _ = fingerTable.Route(1890)
 
 	//Last id
-	assertEqual("127.0.0.0", fingerTable.Route(1890), t)
+	assertEqual("127.0.0.0", host, t)
+
+	host, _ = fingerTable.Route(fingerTable.SelfEntry.Hash - 1)
 
 	//self
-	assertEqual(fingerTable.SelfEntry.Host,
-		fingerTable.Route(fingerTable.SelfEntry.Hash-1), t)
+	assertEqual(fingerTable.SelfEntry.Host, host, t)
 
 	tempHash := fingerTable.SelfEntry.Hash
 	fingerTable.SelfEntry.Hash = fingerTable.PreviousEntry.Hash
 	fingerTable.PreviousEntry.Hash = tempHash
 
+	host, _ = fingerTable.Route(1500)
+
 	//selfhash = 1338, prev = 1480
-	assertEqual(fingerTable.SelfEntry.Host, fingerTable.Route(1500), t)
+	assertEqual(fingerTable.SelfEntry.Host, host, t)
 }
 
 func TestAdd(t *testing.T) {
@@ -239,7 +253,13 @@ func TestAdd(t *testing.T) {
 	}
 
 	fingerTable.Add(secondEntry)
-	assertEqual(secondEntry.Host, fingerTable.Route(1905), t)
-	assertEqual(firstEntry.Host, fingerTable.Route(secondEntry.Hash), t)
+
+	host, _ := fingerTable.Route(1905)
+
+	assertEqual(secondEntry.Host, host, t)
+
+	host, _ = fingerTable.Route(secondEntry.Hash)
+
+	assertEqual(firstEntry.Host, host, t)
 
 }

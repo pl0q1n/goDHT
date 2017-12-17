@@ -121,16 +121,49 @@ type ClientServer struct{}
 // I'm not sure about error handling here (nothing to handle)
 func (s *ClientServer) ProcessGet(ctx context.Context, in *pbClient.GetRequest) (*pbClient.GetResponse, error) {
 	log.Println("starting Process GET")
+	key := SHAToUint64(sha512.Sum512(in.Key))
+	host, ind := GlobalNode.FingerTable.Route(key)
+	if host != GlobalNode.FingerTable.SelfEntry.Host {
+		log.Printf("Route Get to node with host: %s", host)
+		cl := pbClient.NewKeyValueClient(GlobalNode.FingerTableConn.Connections[ind].ClientConn)
+		response, err := cl.ProcessGet(context.Background(), in)
+		if err != nil {
+			log.Fatalln("something wrong with get routing")
+		}
+		return response, nil
+	}
 	return GlobalNode.ProcessGet(in), nil
 }
 
 func (s *ClientServer) ProcessPut(ctx context.Context, in *pbClient.PutRequest) (*pbClient.PutResponse, error) {
 	log.Println("starting Process PUT")
+	key := SHAToUint64(sha512.Sum512(in.Key))
+	host, ind := GlobalNode.FingerTable.Route(key)
+	if host != GlobalNode.FingerTable.SelfEntry.Host {
+		log.Printf("Route Put to node with host: %s", host)
+		cl := pbClient.NewKeyValueClient(GlobalNode.FingerTableConn.Connections[ind].ClientConn)
+		response, err := cl.ProcessPut(context.Background(), in)
+		if err != nil {
+			log.Fatalln("something wrong with put routing")
+		}
+		return response, nil
+	}
 	return GlobalNode.ProcessPut(in), nil
 }
 
 func (s *ClientServer) ProcessDelete(ctx context.Context, in *pbClient.DeleteRequest) (*pbClient.DeleteResponse, error) {
 	log.Println("starting Process DELETE")
+	key := SHAToUint64(sha512.Sum512(in.Key))
+	host, ind := GlobalNode.FingerTable.Route(key)
+	if host != GlobalNode.FingerTable.SelfEntry.Host {
+		log.Printf("Route Delete to node with host: %s", host)
+		cl := pbClient.NewKeyValueClient(GlobalNode.FingerTableConn.Connections[ind].ClientConn)
+		response, err := cl.ProcessDelete(context.Background(), in)
+		if err != nil {
+			log.Fatalln("something wrong with delete routing")
+		}
+		return response, nil
+	}
 	return GlobalNode.ProcessDelete(in), nil
 }
 
@@ -144,12 +177,18 @@ func (s *NodeServer) ProcessJoin(ctx context.Context, in *pbNode.JoinRequest) (*
 		Host: in.Host,
 	}
 
-	if in.Id < GlobalNode.id && in.Id > GlobalNode.FingerTable.PreviousEntry.Hash {
-		status := pbNode.JoinResponse_WrongNode
-		response := &pbNode.JoinResponse{}
-		response.Status = status
+	host, ind := GlobalNode.FingerTable.Route(in.Id)
+	log.Printf("in ID here: %d", in.Id)
+	log.Printf("Route result: %s", host)
+	if host != GlobalNode.FingerTable.SelfEntry.Host {
+		log.Printf("Route join to node with host: %s", host)
+		response, err := GlobalNode.FingerTableConn.Connections[ind].Client.ProcessJoin(context.Background(), in)
+		if err != nil {
+			log.Fatalln("something wrong with join routing")
+		}
 		return response, nil
 	}
+
 	tempFingerTable := FingerTable{}
 	tempFingerTable.Entries[0] = *entry
 	GlobalNode.FingerTableConn.UpdateChan <- tempFingerTable
@@ -164,14 +203,6 @@ func (s *NodeServer) ProcessJoin(ctx context.Context, in *pbNode.JoinRequest) (*
 }
 
 func (s *NodeServer) ProcessFingerTable(ctx context.Context, in *pbNode.FingerTableRequest) (*pbNode.FingerTable, error) {
-	log.Println("starting Process FINGER TABLE")
 	response := GlobalNode.FingerTable.GetProtoFingerTable()
-	return response, nil
-}
-
-func (s *NodeServer) ProcessRoute(ctx context.Context, in *pbNode.RouteRequest) (*pbNode.RouteResponse, error) {
-	log.Println("starting Process ROUTE")
-	response := &pbNode.RouteResponse{}
-
 	return response, nil
 }

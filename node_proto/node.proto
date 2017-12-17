@@ -5,7 +5,6 @@ package node_proto;
 service Node {
     rpc ProcessJoin(JoinRequest) returns (JoinResponse) {}
     rpc ProcessFingerTable(FingerTableRequest) returns (FingerTable) {}
-    rpc ProcessRoute(RouteRequest) returns (RouteResponse) {}
 }
 
 // Add Status to messages
@@ -36,12 +35,4 @@ message FingerTable {
 }
 
 message FingerTableRequest {
-}
-
-message RouteRequest {
-    uint64 hash = 1;
-}
-
-message RouteResponse {
-    string host = 1;
 }
