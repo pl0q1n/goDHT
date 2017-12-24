@@ -19,7 +19,6 @@ message JoinResponse {
     enum Status {
         Success = 0;
         Failure = 101;
-        WrongNode = 102;
     }
     Status status = 3;
 }

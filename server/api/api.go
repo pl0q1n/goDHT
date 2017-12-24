@@ -6,7 +6,6 @@ import (
 
 	"context"
 	"crypto/sha512"
-	"fmt"
 
 	pbClient "github.com/pl0q1n/goDHT/client_proto"
 	pbNode "github.com/pl0q1n/goDHT/node_proto"
@@ -110,16 +109,16 @@ func (node *Node) ProcessPut(request *pbClient.PutRequest) *pbClient.PutResponse
 		}
 		node.HashTable[key] = request.Value
 		//temp print, just to know that everything is alright with client's PUT
-		fmt.Printf("added to node with next args: key: %d, value: %s \n", key, request.Value)
+		log.Printf("added to node with next args: key: %d, value: %s \n", key, request.Value)
 	}
 	return response
 }
 
-type ClientServer struct{}
+type KeyValueService struct{}
 
 // These methods are not thread-safe (TODO)
 // I'm not sure about error handling here (nothing to handle)
-func (s *ClientServer) ProcessGet(ctx context.Context, in *pbClient.GetRequest) (*pbClient.GetResponse, error) {
+func (s *KeyValueService) ProcessGet(ctx context.Context, in *pbClient.GetRequest) (*pbClient.GetResponse, error) {
 	log.Println("starting Process GET")
 	key := SHAToUint64(sha512.Sum512(in.Key))
 	host, ind := GlobalNode.FingerTable.Route(key)
@@ -135,7 +134,7 @@ func (s *ClientServer) ProcessGet(ctx context.Context, in *pbClient.GetRequest) 
 	return GlobalNode.ProcessGet(in), nil
 }
 
-func (s *ClientServer) ProcessPut(ctx context.Context, in *pbClient.PutRequest) (*pbClient.PutResponse, error) {
+func (s *KeyValueService) ProcessPut(ctx context.Context, in *pbClient.PutRequest) (*pbClient.PutResponse, error) {
 	log.Println("starting Process PUT")
 	key := SHAToUint64(sha512.Sum512(in.Key))
 	host, ind := GlobalNode.FingerTable.Route(key)
@@ -151,7 +150,7 @@ func (s *ClientServer) ProcessPut(ctx context.Context, in *pbClient.PutRequest) 
 	return GlobalNode.ProcessPut(in), nil
 }
 
-func (s *ClientServer) ProcessDelete(ctx context.Context, in *pbClient.DeleteRequest) (*pbClient.DeleteResponse, error) {
+func (s *KeyValueService) ProcessDelete(ctx context.Context, in *pbClient.DeleteRequest) (*pbClient.DeleteResponse, error) {
 	log.Println("starting Process DELETE")
 	key := SHAToUint64(sha512.Sum512(in.Key))
 	host, ind := GlobalNode.FingerTable.Route(key)

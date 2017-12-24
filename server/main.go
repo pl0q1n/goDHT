@@ -12,10 +12,10 @@ import (
 	api "github.com/pl0q1n/goDHT/server/api"
 
 	"google.golang.org/grpc"
+	"syscall"
 )
 
 func main() {
-	mode := flag.String("mode", "new", "mode")
 	connectTo := flag.String("target", "127.0.0.1:8080", "target host")
 	host := flag.String("host", "127.0.0.1:8081", "host")
 	flag.Parse()
@@ -27,7 +27,8 @@ func main() {
 	grpcServer := grpc.NewServer()
 	pbNode.RegisterNodeServer(grpcServer, &api.NodeServer{})
 	pbClient.RegisterKeyValueServer(grpcServer, &api.ClientServer{})
-	if *mode == "join" {
+	if *connectTo != "" {
+		log.Printf("Connecting to: %s", *connectTo)
 		join := &pbNode.JoinRequest{
 			Id:   api.GlobalNode.GetId(),
 			Host: *host,
@@ -50,8 +51,8 @@ func main() {
 		api.GlobalNode.FingerTableConn.UpdateChan <- *fingerTable
 	}
 	go api.ProcessConnections(api.GlobalNode)
-	log.Printf("connected with mode: %s", *mode)
-	log.Printf("Start with Self id: %d and self Host: %s", api.GlobalNode.GetId(), api.GlobalNode.FingerTable.SelfEntry.Host)
+	log.Printf("Start with Self id: %d and self Host: %s", api.GlobalNode.GetId(),
+		api.GlobalNode.FingerTable.SelfEntry.Host)
 	grpcServer.Serve(listener)
 
 }

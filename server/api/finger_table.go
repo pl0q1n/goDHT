@@ -12,8 +12,8 @@ type Entry struct {
 }
 
 type Pair struct {
-	first  uint64
-	second uint64
+	Diff  uint64
+	Index uint64
 }
 
 type Update struct {
@@ -131,20 +131,19 @@ func (fingerTable *FingerTable) Route(Hash uint64) (string, int) {
 		return fingerTable.SelfEntry.Host, 64
 	}
 
-	var min Pair = Pair{
-		first:  math.MaxUint64,
-		second: uint64(len(fingerTable.Entries)),
-	}
+	var diffHolder uint64 = math.MaxUint64
+	index := uint64(len(fingerTable.Entries))
+
 
 	for ind, elem := range fingerTable.Entries {
-		if diff(elem.Hash, Hash) < min.first && elem.Hash > Hash {
-			min.first = diff(elem.Hash, Hash)
-			min.second = uint64(ind)
+		if diff(elem.Hash, Hash) < diffHolder && elem.Hash > Hash {
+			diffHolder = diff(elem.Hash, Hash)
+			index = uint64(ind)
 		}
 	}
 
-	if min.second == uint64(len(fingerTable.Entries)) {
+	if index == uint64(len(fingerTable.Entries)) {
 		return fingerTable.Entries[0].Host, 0
 	}
-	return fingerTable.Entries[min.second].Host, int(min.second)
+	return fingerTable.Entries[index].Host, int(index)
 }

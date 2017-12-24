@@ -69,7 +69,7 @@ func main() {
 		}
 		log.Printf("Status of DeleteResponse: %d", r.Status)
 
-	} else {
+	} else if *action == "g"{
 		request := create_get(key)
 		r, err := cl.ProcessGet(context.Background(), request)
 		if err != nil {
@@ -78,5 +78,8 @@ func main() {
 
 		log.Printf("Status of GetResponse: %d", r.Status)
 		log.Printf("Value of GetResponse: %s", string(r.Value[:]))
+
+	} else {
+		log.Printf("Wrong action parameter: %s", *action)
 	}
 }

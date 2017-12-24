@@ -42,7 +42,7 @@ message PutResponse {
 	enum Status {
 		Success = 0;
 		AlreadyExist = 1;
-		InvalidKey = 2;
+		KeyNotFound = 2;
 	}
 	Status status = 2;
 }
