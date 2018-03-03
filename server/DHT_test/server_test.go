@@ -194,17 +194,17 @@ func TestRoute(t *testing.T) {
 	host, _ := fingerTable.Route(90)
 
 	//Primitive one
-	assertEqual("127.0.0.4", host, t)
+	assertEqual("127.0.0.0", host, t)
 
 	host, _ = fingerTable.Route(1900)
 
 	//Over 0
-	assertEqual("127.0.0.0", host, t)
+	assertEqual("127.0.0.63", host, t)
 
 	host, _ = fingerTable.Route(1890)
 
 	//Last id
-	assertEqual("127.0.0.0", host, t)
+	assertEqual("127.0.0.62", host, t)
 
 	host, _ = fingerTable.Route(fingerTable.SelfEntry.Hash - 1)
 
@@ -256,7 +256,7 @@ func TestAdd(t *testing.T) {
 
 	host, _ := fingerTable.Route(1905)
 
-	assertEqual(secondEntry.Host, host, t)
+	assertEqual(firstEntry.Host, host, t)
 
 	host, _ = fingerTable.Route(secondEntry.Hash)
 

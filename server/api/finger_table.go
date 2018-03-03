@@ -1,8 +1,6 @@
 package api
 
 import (
-	"math"
-
 	pbNode "github.com/pl0q1n/goDHT/node_proto"
 )
 
@@ -121,24 +119,25 @@ func (fingerTable *FingerTable) Add(entry *Entry) Update {
 }
 
 func (fingerTable *FingerTable) Route(Hash uint64) (string, int) {
+	// Over zero trip check
 	if fingerTable.SelfEntry.Hash < fingerTable.PreviousEntry.Hash {
 		if Hash >= fingerTable.PreviousEntry.Hash || Hash < fingerTable.SelfEntry.Hash {
 			return fingerTable.SelfEntry.Host, 64
 		}
 	}
 
+	// self check
 	if Hash >= fingerTable.PreviousEntry.Hash && Hash < fingerTable.SelfEntry.Hash {
 		return fingerTable.SelfEntry.Host, 64
 	}
 
-	var diffHolder uint64 = math.MaxUint64
+	var HashHolder uint64
 	index := uint64(len(fingerTable.Entries))
 
-
 	for ind, elem := range fingerTable.Entries {
-		if diff(elem.Hash, Hash) < diffHolder && elem.Hash > Hash {
-			diffHolder = diff(elem.Hash, Hash)
+		if elem.Hash < uint64(Hash) && elem.Hash > HashHolder && elem.Hash > fingerTable.SelfEntry.Hash {
 			index = uint64(ind)
+			HashHolder = elem.Hash
 		}
 	}
 
