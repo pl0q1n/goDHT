@@ -84,15 +84,18 @@ type PutResponse_Status int32
 const (
 	PutResponse_Success      PutResponse_Status = 0
 	PutResponse_AlreadyExist PutResponse_Status = 1
+	PutResponse_KeyNotFound  PutResponse_Status = 2
 )
 
 var PutResponse_Status_name = map[int32]string{
 	0: "Success",
 	1: "AlreadyExist",
+	2: "KeyNotFound",
 }
 var PutResponse_Status_value = map[string]int32{
 	"Success":      0,
 	"AlreadyExist": 1,
+	"KeyNotFound":  2,
 }
 
 func (x PutResponse_Status) String() string {
@@ -101,7 +104,7 @@ func (x PutResponse_Status) String() string {
 func (PutResponse_Status) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 0} }
 
 type GetRequest struct {
-	Key uint64 `protobuf:"varint,1,opt,name=key" json:"key,omitempty"`
+	Key []byte `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 }
 
 func (m *GetRequest) Reset()                    { *m = GetRequest{} }
@@ -109,15 +112,15 @@ func (m *GetRequest) String() string            { return proto.CompactTextString
 func (*GetRequest) ProtoMessage()               {}
 func (*GetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *GetRequest) GetKey() uint64 {
+func (m *GetRequest) GetKey() []byte {
 	if m != nil {
 		return m.Key
 	}
-	return 0
+	return nil
 }
 
 type DeleteRequest struct {
-	Key uint64 `protobuf:"varint,1,opt,name=key" json:"key,omitempty"`
+	Key []byte `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 }
 
 func (m *DeleteRequest) Reset()                    { *m = DeleteRequest{} }
@@ -125,15 +128,16 @@ func (m *DeleteRequest) String() string            { return proto.CompactTextStr
 func (*DeleteRequest) ProtoMessage()               {}
 func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *DeleteRequest) GetKey() uint64 {
+func (m *DeleteRequest) GetKey() []byte {
 	if m != nil {
 		return m.Key
 	}
-	return 0
+	return nil
 }
 
 type PutRequest struct {
-	Value string `protobuf:"bytes,1,opt,name=value" json:"value,omitempty"`
+	Key   []byte `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 }
 
 func (m *PutRequest) Reset()                    { *m = PutRequest{} }
@@ -141,15 +145,22 @@ func (m *PutRequest) String() string            { return proto.CompactTextString
 func (*PutRequest) ProtoMessage()               {}
 func (*PutRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
-func (m *PutRequest) GetValue() string {
+func (m *PutRequest) GetKey() []byte {
+	if m != nil {
+		return m.Key
+	}
+	return nil
+}
+
+func (m *PutRequest) GetValue() []byte {
 	if m != nil {
 		return m.Value
 	}
-	return ""
+	return nil
 }
 
 type GetResponse struct {
-	Value  string             `protobuf:"bytes,1,opt,name=value" json:"value,omitempty"`
+	Value  []byte             `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	Status GetResponse_Status `protobuf:"varint,2,opt,name=status,enum=client_proto.GetResponse_Status" json:"status,omitempty"`
 }
 
@@ -158,11 +169,11 @@ func (m *GetResponse) String() string            { return proto.CompactTextStrin
 func (*GetResponse) ProtoMessage()               {}
 func (*GetResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
-func (m *GetResponse) GetValue() string {
+func (m *GetResponse) GetValue() []byte {
 	if m != nil {
 		return m.Value
 	}
-	return ""
+	return nil
 }
 
 func (m *GetResponse) GetStatus() GetResponse_Status {
@@ -189,7 +200,6 @@ func (m *DeleteResponse) GetStatus() DeleteResponse_Status {
 }
 
 type PutResponse struct {
-	Key    uint64             `protobuf:"varint,1,opt,name=key" json:"key,omitempty"`
 	Status PutResponse_Status `protobuf:"varint,2,opt,name=status,enum=client_proto.PutResponse_Status" json:"status,omitempty"`
 }
 
@@ -197,13 +207,6 @@ func (m *PutResponse) Reset()                    { *m = PutResponse{} }
 func (m *PutResponse) String() string            { return proto.CompactTextString(m) }
 func (*PutResponse) ProtoMessage()               {}
 func (*PutResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *PutResponse) GetKey() uint64 {
-	if m != nil {
-		return m.Key
-	}
-	return 0
-}
 
 func (m *PutResponse) GetStatus() PutResponse_Status {
 	if m != nil {
@@ -232,130 +235,130 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for Node service
+// Client API for KeyValue service
 
-type NodeClient interface {
+type KeyValueClient interface {
 	ProcessGet(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	ProcessPut(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
 	ProcessDelete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
-type nodeClient struct {
+type keyValueClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewNodeClient(cc *grpc.ClientConn) NodeClient {
-	return &nodeClient{cc}
+func NewKeyValueClient(cc *grpc.ClientConn) KeyValueClient {
+	return &keyValueClient{cc}
 }
 
-func (c *nodeClient) ProcessGet(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+func (c *keyValueClient) ProcessGet(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := grpc.Invoke(ctx, "/client_proto.Node/ProcessGet", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/client_proto.KeyValue/ProcessGet", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *nodeClient) ProcessPut(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
+func (c *keyValueClient) ProcessPut(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
 	out := new(PutResponse)
-	err := grpc.Invoke(ctx, "/client_proto.Node/ProcessPut", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/client_proto.KeyValue/ProcessPut", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *nodeClient) ProcessDelete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+func (c *keyValueClient) ProcessDelete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
-	err := grpc.Invoke(ctx, "/client_proto.Node/ProcessDelete", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/client_proto.KeyValue/ProcessDelete", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for Node service
+// Server API for KeyValue service
 
-type NodeServer interface {
+type KeyValueServer interface {
 	ProcessGet(context.Context, *GetRequest) (*GetResponse, error)
 	ProcessPut(context.Context, *PutRequest) (*PutResponse, error)
 	ProcessDelete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 }
 
-func RegisterNodeServer(s *grpc.Server, srv NodeServer) {
-	s.RegisterService(&_Node_serviceDesc, srv)
+func RegisterKeyValueServer(s *grpc.Server, srv KeyValueServer) {
+	s.RegisterService(&_KeyValue_serviceDesc, srv)
 }
 
-func _Node_ProcessGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _KeyValue_ProcessGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServer).ProcessGet(ctx, in)
+		return srv.(KeyValueServer).ProcessGet(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/client_proto.Node/ProcessGet",
+		FullMethod: "/client_proto.KeyValue/ProcessGet",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServer).ProcessGet(ctx, req.(*GetRequest))
+		return srv.(KeyValueServer).ProcessGet(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Node_ProcessPut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _KeyValue_ProcessPut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PutRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServer).ProcessPut(ctx, in)
+		return srv.(KeyValueServer).ProcessPut(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/client_proto.Node/ProcessPut",
+		FullMethod: "/client_proto.KeyValue/ProcessPut",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServer).ProcessPut(ctx, req.(*PutRequest))
+		return srv.(KeyValueServer).ProcessPut(ctx, req.(*PutRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Node_ProcessDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _KeyValue_ProcessDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServer).ProcessDelete(ctx, in)
+		return srv.(KeyValueServer).ProcessDelete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/client_proto.Node/ProcessDelete",
+		FullMethod: "/client_proto.KeyValue/ProcessDelete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServer).ProcessDelete(ctx, req.(*DeleteRequest))
+		return srv.(KeyValueServer).ProcessDelete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Node_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "client_proto.Node",
-	HandlerType: (*NodeServer)(nil),
+var _KeyValue_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "client_proto.KeyValue",
+	HandlerType: (*KeyValueServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ProcessGet",
-			Handler:    _Node_ProcessGet_Handler,
+			Handler:    _KeyValue_ProcessGet_Handler,
 		},
 		{
 			MethodName: "ProcessPut",
-			Handler:    _Node_ProcessPut_Handler,
+			Handler:    _KeyValue_ProcessPut_Handler,
 		},
 		{
 			MethodName: "ProcessDelete",
-			Handler:    _Node_ProcessDelete_Handler,
+			Handler:    _KeyValue_ProcessDelete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -365,25 +368,26 @@ var _Node_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("client_proto/client.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 316 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x52, 0xcd, 0x4e, 0x83, 0x40,
-	0x10, 0x66, 0xb5, 0xa2, 0x4e, 0x69, 0x43, 0x36, 0x1e, 0xa8, 0x1a, 0x83, 0xdb, 0x83, 0x3d, 0x61,
-	0x52, 0x2f, 0x26, 0x9e, 0x8c, 0x3f, 0xbd, 0x98, 0x86, 0xd0, 0x07, 0x30, 0x08, 0x73, 0x68, 0x24,
-	0x6c, 0x65, 0x77, 0x8d, 0xbd, 0xfa, 0xa0, 0x3e, 0x8b, 0x61, 0xc1, 0xba, 0x6d, 0xa9, 0x26, 0xbd,
-	0x31, 0xc3, 0xc7, 0xf7, 0x37, 0x40, 0x2f, 0xc9, 0xa6, 0x98, 0xcb, 0xe7, 0x59, 0xc1, 0x25, 0xbf,
-	0xac, 0x86, 0x40, 0x0f, 0xd4, 0x31, 0x5f, 0xb1, 0x33, 0x80, 0x11, 0xca, 0x08, 0xdf, 0x14, 0x0a,
-	0x49, 0x5d, 0xd8, 0x7d, 0xc5, 0xb9, 0x47, 0x7c, 0x32, 0x68, 0x45, 0xe5, 0x23, 0x3b, 0x87, 0xce,
-	0x3d, 0x66, 0x28, 0x71, 0x33, 0x84, 0x01, 0x84, 0x6a, 0x41, 0x71, 0x04, 0x7b, 0xef, 0x71, 0xa6,
-	0x50, 0x23, 0x0e, 0xa3, 0x6a, 0x60, 0x9f, 0x04, 0xda, 0x5a, 0x47, 0xcc, 0x78, 0x2e, 0xb0, 0x19,
-	0x45, 0xaf, 0xc1, 0x16, 0x32, 0x96, 0x4a, 0x78, 0x3b, 0x3e, 0x19, 0x74, 0x87, 0x7e, 0x60, 0x7a,
-	0x0d, 0x0c, 0x82, 0x60, 0xa2, 0x71, 0x51, 0x8d, 0x67, 0x7d, 0xb0, 0xab, 0x0d, 0x6d, 0xc3, 0xfe,
-	0x44, 0x25, 0x09, 0x0a, 0xe1, 0x5a, 0xd4, 0x81, 0x83, 0x31, 0x97, 0x8f, 0x5c, 0xe5, 0xa9, 0x4b,
-	0x58, 0x01, 0xdd, 0x9f, 0x2c, 0xb5, 0x8d, 0x9b, 0x85, 0x20, 0xd1, 0x82, 0xfd, 0x65, 0xc1, 0x65,
-	0xf4, 0x56, 0x9a, 0x65, 0x70, 0xdd, 0x4e, 0xad, 0xb8, 0x56, 0xdf, 0x7f, 0xa1, 0x8d, 0x8f, 0x57,
-	0x0d, 0x5c, 0x34, 0x1b, 0x70, 0xc1, 0xb9, 0xcd, 0x0a, 0x8c, 0xd3, 0xf9, 0xc3, 0xc7, 0x54, 0x48,
-	0x97, 0x0c, 0xbf, 0x08, 0xb4, 0xc6, 0x3c, 0x45, 0x7a, 0x07, 0x10, 0x16, 0xbc, 0xc4, 0x8d, 0x50,
-	0x52, 0xaf, 0xa1, 0x5e, 0x7d, 0xc4, 0xe3, 0xde, 0xc6, 0xe2, 0x99, 0x65, 0x90, 0x84, 0x6a, 0x8d,
-	0xe4, 0xf7, 0x4f, 0x58, 0x25, 0x31, 0x82, 0x30, 0x8b, 0x3e, 0x41, 0xa7, 0x26, 0xa9, 0x4a, 0xa6,
-	0x27, 0xcd, 0xd5, 0x57, 0x54, 0xa7, 0x7f, 0xdd, 0x85, 0x59, 0x2f, 0xb6, 0xde, 0x5f, 0x7d, 0x07,
-	0x00, 0x00, 0xff, 0xff, 0xc0, 0x9f, 0xed, 0x00, 0xf7, 0x02, 0x00, 0x00,
+	// 329 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x92, 0x4f, 0x4b, 0xc3, 0x40,
+	0x10, 0xc5, 0xb3, 0x15, 0x6b, 0x99, 0xa4, 0x35, 0x2c, 0x1e, 0x52, 0x15, 0xa9, 0xdb, 0x8b, 0xa7,
+	0x08, 0xd5, 0x43, 0xc1, 0x93, 0xf8, 0xa7, 0x87, 0x8a, 0x84, 0x14, 0xbc, 0x4a, 0x4c, 0xe7, 0x50,
+	0x0c, 0xd9, 0x9a, 0xdd, 0x15, 0x73, 0xd4, 0x8f, 0xea, 0x27, 0x91, 0x6e, 0x62, 0xbb, 0xad, 0x89,
+	0x82, 0xb7, 0xcc, 0xe4, 0xed, 0xfb, 0xcd, 0xbc, 0x5d, 0xe8, 0xc6, 0xc9, 0x0c, 0x53, 0xf9, 0x38,
+	0xcf, 0xb8, 0xe4, 0xa7, 0x45, 0xe1, 0xeb, 0x82, 0x3a, 0xe6, 0x2f, 0x76, 0x04, 0x30, 0x42, 0x19,
+	0xe2, 0x8b, 0x42, 0x21, 0xa9, 0x0b, 0x5b, 0xcf, 0x98, 0x7b, 0xa4, 0x47, 0x4e, 0x9c, 0x70, 0xf1,
+	0xc9, 0x8e, 0xa1, 0x7d, 0x8d, 0x09, 0x4a, 0xac, 0x97, 0x9c, 0x03, 0x04, 0xaa, 0xde, 0x82, 0xee,
+	0xc1, 0xf6, 0x6b, 0x94, 0x28, 0xf4, 0x1a, 0xba, 0x57, 0x14, 0xec, 0x83, 0x80, 0xad, 0xc9, 0x62,
+	0xce, 0x53, 0x81, 0x2b, 0x15, 0x31, 0x54, 0x74, 0x08, 0x4d, 0x21, 0x23, 0xa9, 0x84, 0x3e, 0xdc,
+	0x19, 0xf4, 0x7c, 0x73, 0x7a, 0xdf, 0x30, 0xf0, 0x27, 0x5a, 0x17, 0x96, 0x7a, 0xd6, 0x87, 0x66,
+	0xd1, 0xa1, 0x36, 0xec, 0x4c, 0x54, 0x1c, 0xa3, 0x10, 0xae, 0x45, 0x1d, 0x68, 0xdd, 0x73, 0x79,
+	0xcb, 0x55, 0x3a, 0x75, 0x09, 0xcb, 0xa0, 0xf3, 0xbd, 0x5d, 0x39, 0xc6, 0xc5, 0x12, 0x48, 0x34,
+	0xb0, 0xbf, 0x0e, 0x5c, 0x57, 0xff, 0x8b, 0xf9, 0x4e, 0xc0, 0xd6, 0x79, 0x95, 0xc4, 0x3f, 0x56,
+	0x34, 0xa4, 0x9b, 0xb8, 0x61, 0x35, 0xce, 0x05, 0xe7, 0x32, 0xc9, 0x30, 0x9a, 0xe6, 0x37, 0x6f,
+	0x33, 0x21, 0x5d, 0x42, 0x77, 0xc1, 0x1e, 0x63, 0xbe, 0x9c, 0xa1, 0x31, 0xf8, 0x24, 0xd0, 0x1a,
+	0x63, 0xfe, 0xa0, 0x33, 0xbe, 0x02, 0x08, 0x32, 0xbe, 0x38, 0x3c, 0x42, 0x49, 0xbd, 0x8a, 0x84,
+	0xf5, 0xcd, 0xee, 0x77, 0x6b, 0xb3, 0x67, 0x96, 0x61, 0x12, 0xa8, 0x1f, 0x26, 0xab, 0xe7, 0xb1,
+	0x69, 0x62, 0x6c, 0xc7, 0x2c, 0x7a, 0x07, 0xed, 0xd2, 0xa4, 0xc8, 0x99, 0x1e, 0x54, 0xa7, 0x5f,
+	0x58, 0x1d, 0xfe, 0x76, 0x35, 0xcc, 0x7a, 0x6a, 0xea, 0xfe, 0xd9, 0x57, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0xaa, 0xda, 0x36, 0x15, 0x0c, 0x03, 0x00, 0x00,
 }

@@ -10,4 +10,4 @@ install:
 script:
   - cd ../server && go build
   - cd ../client && go build
-  - cd ../server && go test ./test
+  - cd ../server && go test ./DHT_test

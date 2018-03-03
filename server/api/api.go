@@ -2,97 +2,210 @@ package api
 
 import (
 	"encoding/binary"
-
-	pb "github.com/pl0q1n/goDHT/client_proto"
+	"log"
 
 	"context"
 	"crypto/sha512"
-	"fmt"
+
+	pbClient "github.com/pl0q1n/goDHT/client_proto"
+	pbNode "github.com/pl0q1n/goDHT/node_proto"
 )
 
-// Node..Brief implimentation of node structure for DHT
+// Node...Brief implimentation of node structure for DHT
 type Node struct {
-	hashTable map[uint64]string
-	start     uint64
-	end       uint64
-	id        uint64
+	HashTable       map[uint64][]byte
+	FingerTable     FingerTable
+	FingerTableConn FingerTableConnection
+	start           uint64
+	end             uint64
+	id              uint64
 }
 
 var GlobalNode *Node = &Node{
-	hashTable: make(map[uint64]string),
-	start:     0,
-	end:       0,
-	id:        0,
+	HashTable: make(map[uint64][]byte),
+	FingerTableConn: FingerTableConnection{
+		UpdateChan: make(chan FingerTable, 1),
+	},
+	FingerTable: FingerTable{
+		PreviousEntry: Entry{
+			Host: "",
+			Hash: 0,
+		},
+		SelfEntry: Entry{
+			Host: "",
+			Hash: 0,
+		},
+	},
 }
 
 func SHAToUint64(hash [64]byte) uint64 {
 	return binary.BigEndian.Uint64(hash[:8])
 }
 
-func (node *Node) SetId(host *string) {
-	hashSum := sha512.Sum512([]byte(*host))
-	node.id = SHAToUint64(hashSum)
+func KeyToUint64(data []byte) uint64 {
+	return SHAToUint64(sha512.Sum512(data))
 }
 
-func (node *Node) ProcessGet(request *pb.GetRequest) *pb.GetResponse {
-	response := &pb.GetResponse{}
-	value, ok := node.hashTable[request.Key]
+func (node *Node) GetId() uint64 {
+	return node.FingerTable.SelfEntry.Hash
+}
+
+func (node *Node) SetId(host *string) {
+	hashSum := sha512.Sum512([]byte(*host))
+	node.FingerTable.SelfEntry.Host = *host
+	node.FingerTable.SelfEntry.Hash = SHAToUint64(hashSum)
+	log.Printf("Log from SetId. HOST: %S, ID: %D", *host, node.FingerTable.SelfEntry.Hash)
+}
+
+func (node *Node) GetRange(start uint64, end uint64) map[uint64][]byte {
+	rangeMap := make(map[uint64][]byte)
+	for key, value := range node.HashTable {
+		if key >= start && key < end {
+			rangeMap[key] = value
+		}
+	}
+	return rangeMap
+}
+
+func (node *Node) ProcessGet(request *pbClient.GetRequest) *pbClient.GetResponse {
+	response := &pbClient.GetResponse{}
+	key := KeyToUint64(request.Key)
+	value, ok := node.HashTable[key]
 	if !ok {
-		response.Status = 1 // I don't get how to take "value-name" of enum from pb
+		response.Status = pbClient.GetResponse_NotFound // I don't get how to take "value-name" of enum from pb
 	} else {
-		response.Status = 0
+		response.Status = pbClient.GetResponse_Success
 	}
 	response.Value = value
 	return response
 }
 
-func (node *Node) ProcessDelete(request *pb.DeleteRequest) *pb.DeleteResponse {
-	response := &pb.DeleteResponse{}
-	_, ok := node.hashTable[request.Key]
+func (node *Node) ProcessDelete(request *pbClient.DeleteRequest) *pbClient.DeleteResponse {
+	response := &pbClient.DeleteResponse{}
+	key := KeyToUint64(request.Key)
+	_, ok := node.HashTable[key]
 	if ok {
-		response.Status = 0
-		delete(node.hashTable, request.Key)
+		response.Status = pbClient.DeleteResponse_Success
+		delete(node.HashTable, key)
 	} else {
-		response.Status = 1
+		response.Status = pbClient.DeleteResponse_NotFound
 	}
 	return response
 }
 
-func (node *Node) ProcessPut(request *pb.PutRequest) *pb.PutResponse {
-	response := &pb.PutResponse{}
-	valueBytes := []byte(request.Value)
-	key := SHAToUint64(sha512.Sum512(valueBytes))
-	_, ok := node.hashTable[key]
-	if ok {
-		response.Status = 1
+func (node *Node) ProcessPut(request *pbClient.PutRequest) *pbClient.PutResponse {
+	response := &pbClient.PutResponse{}
+
+	// check that Key is null
+	if len(request.Key) == 0 {
+		response.Status = pbClient.PutResponse_KeyNotFound
+		return response
+	}
+	key := KeyToUint64(request.Key)
+	_, exist := node.HashTable[key]
+	if exist {
+		response.Status = pbClient.PutResponse_AlreadyExist
 	} else {
-		response.Key = key
-		response.Status = 0
+		response.Status = pbClient.PutResponse_Success
 		// temp if for server_tests. Should create mock or something to avoid this runtime check
-		if node.hashTable == nil {
-			node.hashTable = make(map[uint64]string)
+		if node.HashTable == nil {
+			node.HashTable = make(map[uint64][]byte)
 		}
-		node.hashTable[key] = request.Value
+		node.HashTable[key] = request.Value
 		//temp print, just to know that everything is alright with client's PUT
-		fmt.Printf("added to node with next args: key: %d, value: %s \n", key, request.Value)
+		log.Printf("added to node with next args: key: %d, value: %s \n", key, request.Value)
 	}
 	return response
 }
 
-type Server struct{}
+type KeyValueService struct{}
 
+// These methods are not thread-safe (TODO)
 // I'm not sure about error handling here (nothing to handle)
-func (s *Server) ProcessGet(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
-	fmt.Println("starting Process GET")
+func (s *KeyValueService) ProcessGet(ctx context.Context, in *pbClient.GetRequest) (*pbClient.GetResponse, error) {
+	log.Println("starting Process GET")
+	key := KeyToUint64(in.Key)
+	host, ind := GlobalNode.FingerTable.Route(key)
+	if host != GlobalNode.FingerTable.SelfEntry.Host {
+		log.Printf("Route Get to node with host: %s", host)
+		cl := pbClient.NewKeyValueClient(GlobalNode.FingerTableConn.Connections[ind].ClientConn)
+		response, err := cl.ProcessGet(context.Background(), in)
+		if err != nil {
+			log.Fatalln("something wrong with get routing")
+		}
+		return response, nil
+	}
 	return GlobalNode.ProcessGet(in), nil
 }
 
-func (s *Server) ProcessPut(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
-	fmt.Println("starting Process PUT")
+func (s *KeyValueService) ProcessPut(ctx context.Context, in *pbClient.PutRequest) (*pbClient.PutResponse, error) {
+	log.Println("starting Process PUT")
+	key := KeyToUint64(in.Key)
+	host, ind := GlobalNode.FingerTable.Route(key)
+	if host != GlobalNode.FingerTable.SelfEntry.Host {
+		log.Printf("Route Put to node with host: %s", host)
+		cl := pbClient.NewKeyValueClient(GlobalNode.FingerTableConn.Connections[ind].ClientConn)
+		response, err := cl.ProcessPut(context.Background(), in)
+		if err != nil {
+			log.Fatalln("something wrong with put routing")
+		}
+		return response, nil
+	}
 	return GlobalNode.ProcessPut(in), nil
 }
 
-func (s *Server) ProcessDelete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	fmt.Println("starting Process DELETE")
+func (s *KeyValueService) ProcessDelete(ctx context.Context, in *pbClient.DeleteRequest) (*pbClient.DeleteResponse, error) {
+	log.Println("starting Process DELETE")
+	key := KeyToUint64(in.Key)
+	host, ind := GlobalNode.FingerTable.Route(key)
+	if host != GlobalNode.FingerTable.SelfEntry.Host {
+		log.Printf("Route Delete to node with host: %s", host)
+		cl := pbClient.NewKeyValueClient(GlobalNode.FingerTableConn.Connections[ind].ClientConn)
+		response, err := cl.ProcessDelete(context.Background(), in)
+		if err != nil {
+			log.Fatalln("something wrong with delete routing")
+		}
+		return response, nil
+	}
 	return GlobalNode.ProcessDelete(in), nil
+}
+
+type NodeServer struct {
+}
+
+func (s *NodeServer) ProcessJoin(ctx context.Context, in *pbNode.JoinRequest) (*pbNode.JoinResponse, error) {
+	log.Println("starting Process JOIN")
+	var entry *Entry = &Entry{
+		Hash: in.Id,
+		Host: in.Host,
+	}
+
+	host, ind := GlobalNode.FingerTable.Route(in.Id)
+	log.Printf("in ID here: %d", in.Id)
+	log.Printf("Route result: %s", host)
+	if host != GlobalNode.FingerTable.SelfEntry.Host {
+		log.Printf("Route join to node with host: %s", host)
+		response, err := GlobalNode.FingerTableConn.Connections[ind].Client.ProcessJoin(context.Background(), in)
+		if err != nil {
+			log.Fatalln("something wrong with join routing")
+		}
+		return response, nil
+	}
+
+	tempFingerTable := FingerTable{}
+	tempFingerTable.Entries[0] = *entry
+	GlobalNode.FingerTableConn.UpdateChan <- tempFingerTable
+	protoFingerTable := GlobalNode.FingerTable.GetProtoFingerTable()
+
+	response := &pbNode.JoinResponse{}
+	response.FingerTable = protoFingerTable
+	response.InitStorage = GlobalNode.GetRange(GlobalNode.FingerTable.PreviousEntry.Hash, in.Id)
+	response.Status = pbNode.JoinResponse_Success
+
+	return response, nil
+}
+
+func (s *NodeServer) ProcessFingerTable(ctx context.Context, in *pbNode.FingerTableRequest) (*pbNode.FingerTable, error) {
+	response := GlobalNode.FingerTable.GetProtoFingerTable()
+	return response, nil
 }
