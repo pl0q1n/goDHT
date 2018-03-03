@@ -12,7 +12,6 @@ import (
 	api "github.com/pl0q1n/goDHT/server/api"
 
 	"google.golang.org/grpc"
-	"syscall"
 )
 
 func main() {
@@ -26,7 +25,7 @@ func main() {
 	api.GlobalNode.SetId(host)
 	grpcServer := grpc.NewServer()
 	pbNode.RegisterNodeServer(grpcServer, &api.NodeServer{})
-	pbClient.RegisterKeyValueServer(grpcServer, &api.ClientServer{})
+	pbClient.RegisterKeyValueServer(grpcServer, &api.KeyValueService{})
 	if *connectTo != "" {
 		log.Printf("Connecting to: %s", *connectTo)
 		join := &pbNode.JoinRequest{
