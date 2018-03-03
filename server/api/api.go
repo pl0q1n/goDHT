@@ -42,6 +42,10 @@ func SHAToUint64(hash [64]byte) uint64 {
 	return binary.BigEndian.Uint64(hash[:8])
 }
 
+func KeyToUint64(data []byte) uint64 {
+	return SHAToUint64(sha512.Sum512(data))
+}
+
 func (node *Node) GetId() uint64 {
 	return node.FingerTable.SelfEntry.Hash
 }
@@ -65,12 +69,12 @@ func (node *Node) GetRange(start uint64, end uint64) map[uint64][]byte {
 
 func (node *Node) ProcessGet(request *pbClient.GetRequest) *pbClient.GetResponse {
 	response := &pbClient.GetResponse{}
-	key := SHAToUint64(sha512.Sum512(request.Key))
+	key := KeyToUint64(request.Key)
 	value, ok := node.HashTable[key]
 	if !ok {
-		response.Status = 1 // I don't get how to take "value-name" of enum from pb
+		response.Status = pbClient.GetResponse_NotFound // I don't get how to take "value-name" of enum from pb
 	} else {
-		response.Status = 0
+		response.Status = pbClient.GetResponse_Success
 	}
 	response.Value = value
 	return response
@@ -78,13 +82,13 @@ func (node *Node) ProcessGet(request *pbClient.GetRequest) *pbClient.GetResponse
 
 func (node *Node) ProcessDelete(request *pbClient.DeleteRequest) *pbClient.DeleteResponse {
 	response := &pbClient.DeleteResponse{}
-	key := SHAToUint64(sha512.Sum512(request.Key))
+	key := KeyToUint64(request.Key)
 	_, ok := node.HashTable[key]
 	if ok {
-		response.Status = 0
+		response.Status = pbClient.DeleteResponse_Success
 		delete(node.HashTable, key)
 	} else {
-		response.Status = 1
+		response.Status = pbClient.DeleteResponse_NotFound
 	}
 	return response
 }
@@ -94,15 +98,15 @@ func (node *Node) ProcessPut(request *pbClient.PutRequest) *pbClient.PutResponse
 
 	// check that Key is null
 	if len(request.Key) == 0 {
-		response.Status = 3
+		response.Status = pbClient.PutResponse_KeyNotFound
 		return response
 	}
-	key := SHAToUint64(sha512.Sum512(request.Key))
+	key := KeyToUint64(request.Key)
 	_, exist := node.HashTable[key]
 	if exist {
-		response.Status = 1
+		response.Status = pbClient.PutResponse_AlreadyExist
 	} else {
-		response.Status = 0
+		response.Status = pbClient.PutResponse_Success
 		// temp if for server_tests. Should create mock or something to avoid this runtime check
 		if node.HashTable == nil {
 			node.HashTable = make(map[uint64][]byte)
@@ -120,7 +124,7 @@ type KeyValueService struct{}
 // I'm not sure about error handling here (nothing to handle)
 func (s *KeyValueService) ProcessGet(ctx context.Context, in *pbClient.GetRequest) (*pbClient.GetResponse, error) {
 	log.Println("starting Process GET")
-	key := SHAToUint64(sha512.Sum512(in.Key))
+	key := KeyToUint64(in.Key)
 	host, ind := GlobalNode.FingerTable.Route(key)
 	if host != GlobalNode.FingerTable.SelfEntry.Host {
 		log.Printf("Route Get to node with host: %s", host)
@@ -136,7 +140,7 @@ func (s *KeyValueService) ProcessGet(ctx context.Context, in *pbClient.GetReques
 
 func (s *KeyValueService) ProcessPut(ctx context.Context, in *pbClient.PutRequest) (*pbClient.PutResponse, error) {
 	log.Println("starting Process PUT")
-	key := SHAToUint64(sha512.Sum512(in.Key))
+	key := KeyToUint64(in.Key)
 	host, ind := GlobalNode.FingerTable.Route(key)
 	if host != GlobalNode.FingerTable.SelfEntry.Host {
 		log.Printf("Route Put to node with host: %s", host)
@@ -152,7 +156,7 @@ func (s *KeyValueService) ProcessPut(ctx context.Context, in *pbClient.PutReques
 
 func (s *KeyValueService) ProcessDelete(ctx context.Context, in *pbClient.DeleteRequest) (*pbClient.DeleteResponse, error) {
 	log.Println("starting Process DELETE")
-	key := SHAToUint64(sha512.Sum512(in.Key))
+	key := KeyToUint64(in.Key)
 	host, ind := GlobalNode.FingerTable.Route(key)
 	if host != GlobalNode.FingerTable.SelfEntry.Host {
 		log.Printf("Route Delete to node with host: %s", host)

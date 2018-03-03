@@ -61,7 +61,7 @@ func TestGetProcessingNotFound(t *testing.T) {
 	}
 
 	response := node.ProcessGet(testRequest)
-	if response.Status != 1 {
+	if response.Status != pbClient.GetResponse_NotFound {
 		t.Errorf("wrong GetResponse_Status: %d", response.Status)
 	}
 }
@@ -76,8 +76,8 @@ func TestPutProcessingSuccess(t *testing.T) {
 	}
 
 	response := node.ProcessPut(testRequest)
-	if response.Status != 0 {
-		t.Errorf("invalid GetResponse_Status. Expected: %d, but got: %d", 0, response.Status)
+	if response.Status != pbClient.PutResponse_Success {
+		t.Errorf("invalid PutResponse_Status. Expected: %d, but got: %d", 0, response.Status)
 	}
 }
 
@@ -110,7 +110,7 @@ func TestPutProcessingAlreadyExist(t *testing.T) {
 
 	node.ProcessPut(testRequest)
 	response := node.ProcessPut(testRequest)
-	if response.Status != 1 {
+	if response.Status != pbClient.PutResponse_AlreadyExist {
 		t.Errorf("invalid PutProcessing_Status. Expected: %d, but got: %d", 1, response.Status)
 	}
 }
@@ -123,7 +123,7 @@ func TestDeleteProcessingNotFound(t *testing.T) {
 		key,
 	}
 	response := node.ProcessDelete(testRequest)
-	if response.Status != 1 {
+	if response.Status != pbClient.DeleteResponse_NotFound {
 		t.Errorf("invalid DeleteResponse_Status. Expected: %d, but got: %d", 1, response.Status)
 	}
 }
@@ -142,7 +142,7 @@ func TestDeleteProcessingSuccess(t *testing.T) {
 		Key: key,
 	}
 	response := node.ProcessDelete(testDeleteRequest)
-	if response.Status != 0 {
+	if response.Status != pbClient.DeleteResponse_Success {
 		t.Errorf("invalid DeleteResponse_Status. Expected: %d, but got: %d", 0, response.Status)
 	}
 
@@ -151,7 +151,7 @@ func TestDeleteProcessingSuccess(t *testing.T) {
 	}
 
 	testGetResponse := node.ProcessGet(testGetRequest)
-	if testGetResponse.Status != 1 {
+	if testGetResponse.Status != pbClient.GetResponse_NotFound {
 		t.Errorf("wrong GetResponse_Status: %d", testGetResponse.Status)
 	}
 }
