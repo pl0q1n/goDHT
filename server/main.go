@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	connectTo := flag.String("target", "127.0.0.1:8080", "target host")
+	connectTo := flag.String("target", "", "target host")
 	host := flag.String("host", "127.0.0.1:8081", "host")
 	flag.Parse()
 	listener, err := net.Listen("tcp", *host)

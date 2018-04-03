@@ -126,8 +126,17 @@ func (fingerTable *FingerTable) Route(Hash uint64) (string, int) {
 		}
 	}
 
+	size := uint64(0)
+
+	// fingerTable size check (TODO: add size as member of fingerTable)
+	for _, elem := range fingerTable.Entries {
+		if elem.Host != "" {
+			size++
+		}
+	}
+
 	// self check
-	if Hash >= fingerTable.PreviousEntry.Hash && Hash < fingerTable.SelfEntry.Hash {
+	if Hash >= fingerTable.PreviousEntry.Hash && Hash < fingerTable.SelfEntry.Hash || size == 0 {
 		return fingerTable.SelfEntry.Host, 64
 	}
 
